@@ -1,15 +1,18 @@
+﻿using SupportDeskPro.Infrastructure;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
+// ── ADD SERVICES ──────────────────────────────────────────────
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Infrastructure (DbContext, services)
+builder.Services.AddInfrastructure(builder.Configuration);
+
+// ── BUILD APP ─────────────────────────────────────────────────
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -17,9 +20,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
