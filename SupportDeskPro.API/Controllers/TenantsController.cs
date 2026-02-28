@@ -3,11 +3,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SupportDeskPro.Application.Features.Tenants.CreateTenant;
 using SupportDeskPro.Application.Features.Tenants.GetMyTenant;
+using SupportDeskPro.Application.Features.Tenants.GetTenantById;
 using SupportDeskPro.Application.Features.Tenants.GetTenants;
+using SupportDeskPro.Application.Features.Tenants.UpdateTenant;
+using SupportDeskPro.Application.Features.Tenants.UpdateTenantSettings;
 using SupportDeskPro.Application.Features.Tenants.UpdateTenantStatus;
+using SupportDeskPro.Application.Interfaces;
 using SupportDeskPro.Contracts.Common;
 using SupportDeskPro.Contracts.Tenants;
-using System.Diagnostics;
 
 namespace SupportDeskPro.API.Controllers;
 
@@ -93,5 +96,72 @@ public class TenantsController : ControllerBase
                 ApiResponse<string>.Fail("Tenant not found."));
 
         return Ok(ApiResponse<TenantDetailResponse>.Ok(result));
+    }
+
+    // GET /api/tenants/{id} (SuperAdmin only)
+    [HttpGet("{id}")]
+    [Authorize(Roles = "SuperAdmin")]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        var result = await _mediator.Send(
+            new GetTenantByIdQuery(id));
+
+        if (result == null)
+            return NotFound(
+                ApiResponse<string>.Fail("Tenant not found."));
+
+        return Ok(ApiResponse<TenantDetailResponse>.Ok(result));
+    }
+
+    // PUT /api/tenants/{id} (SuperAdmin only)
+    [HttpPut("{id}")]
+    [Authorize(Roles = "SuperAdmin")]
+    public async Task<IActionResult> Update(
+        Guid id,
+        [FromBody] UpdateTenantRequest request)
+    {
+        var result = await _mediator.Send(
+            new UpdateTenantCommand(
+                id,
+                request.Name,
+                request.PlanType,
+                request.MaxAgents,
+                request.MaxTickets));
+
+        if (!result.Success)
+            return NotFound(
+                ApiResponse<string>.Fail(result.Message));
+
+        return Ok(ApiResponse<string>.Ok(
+            result.Message, result.Message));
+    }
+
+    // PUT /api/tenants/my/settings (Admin only)
+    [HttpPut("my/settings")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UpdateMySettings(
+        [FromBody] UpdateTenantSettingsRequest request,
+        [FromServices] ICurrentTenantService tenantService)
+    {
+        if (tenantService.TenantId == null)
+            return BadRequest(
+                ApiResponse<string>.Fail("Tenant not found."));
+
+        var result = await _mediator.Send(
+            new UpdateTenantSettingsCommand(
+                tenantService.TenantId.Value,
+                request.TimeZone,
+                request.WorkingHoursStart,
+                request.WorkingHoursEnd,
+                request.WorkingDays,
+                request.AutoCloseAfterDays,
+                request.AllowCustomerSelfRegistration));
+
+        if (!result.Success)
+            return NotFound(
+                ApiResponse<string>.Fail(result.Message));
+
+        return Ok(ApiResponse<string>.Ok(
+            result.Message, result.Message));
     }
 }
