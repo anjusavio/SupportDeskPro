@@ -7,8 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Auth\" />
-    <Folder Include="Common\" />
     <Folder Include="Users\" />
     <Folder Include="Tickets\" />
   </ItemGroup>

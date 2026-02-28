@@ -5,7 +5,7 @@ using SupportDeskPro.Domain.Entities;
 
 namespace SupportDeskPro.Infrastructure.Persistence
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : DbContext, IApplicationDbContext
     {
         private readonly ICurrentTenantService _tenantService;
 

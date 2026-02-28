@@ -4,7 +4,7 @@
     //It contains the common columns every table has
     public abstract class BaseEntity
     {
-        public Guid Id { get; set; } = Guid.NewGuid(); //// Works perfectly in distributed systems
+        public Guid Id { get; set; } = Guid.NewGuid(); // Works perfectly in distributed systems
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

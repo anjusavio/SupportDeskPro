@@ -8,7 +8,7 @@ namespace SupportDeskPro.Domain.Entities
     public class Tenant : BaseEntity
     {
         public string Name { get; set; } = string.Empty;
-        public string Slug { get; set; } = string.Empty;
+        public string Slug { get; set; } = string.Empty;//URL-friendly version of a company name (without space). eg: Acme Corporation →acme-corporation
         public PlanType PlanType { get; set; } = PlanType.Free;
         public bool IsActive { get; set; } = true;
         public int MaxAgents { get; set; } = 5;
