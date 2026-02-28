@@ -25,9 +25,19 @@ public class CurrentTenantService : ICurrentTenantService
         }
     }
 
-    public string? TenantName =>
-        User?.FindFirst("TenantName")?.Value;
+    public string? TenantName =>User?.FindFirst("TenantName")?.Value;
 
-    public bool IsSuperAdmin =>
-        User?.FindFirst(ClaimTypes.Role)?.Value == "SuperAdmin";
+    public bool IsSuperAdmin =>User?.FindFirst(ClaimTypes.Role)?.Value == "SuperAdmin";
+
+    public Guid? CurrentUserId
+    {
+        get
+        {
+            var claim = User?.FindFirst(
+                System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            return !string.IsNullOrEmpty(claim)
+                ? Guid.Parse(claim)
+                : null;
+        }
+    }
 }

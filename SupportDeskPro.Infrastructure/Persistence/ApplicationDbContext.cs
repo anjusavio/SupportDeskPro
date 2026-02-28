@@ -130,6 +130,8 @@ namespace SupportDeskPro.Infrastructure.Persistence
         public override async Task<int> SaveChangesAsync(
             CancellationToken cancellationToken = default)
         {
+            // Get current logged in userId from JWT
+            var currentUserId = _tenantService.CurrentUserId;
             foreach (var entry in ChangeTracker.Entries<BaseEntity>())
             {
                 switch (entry.State)
@@ -137,10 +139,13 @@ namespace SupportDeskPro.Infrastructure.Persistence
                     case EntityState.Added:
                         entry.Entity.CreatedAt = DateTime.UtcNow;
                         entry.Entity.UpdatedAt = DateTime.UtcNow;
+                        entry.Entity.CreatedBy = currentUserId; 
+                        entry.Entity.UpdatedBy = currentUserId; 
                         break;
 
                     case EntityState.Modified:
                         entry.Entity.UpdatedAt = DateTime.UtcNow;
+                        entry.Entity.UpdatedBy = currentUserId;
                         break;
                 }
             }
