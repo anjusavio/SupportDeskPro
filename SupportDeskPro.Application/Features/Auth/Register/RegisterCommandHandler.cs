@@ -30,7 +30,22 @@ namespace SupportDeskPro.Application.Features.Auth.Register
             if (request.Password != request.ConfirmPassword)
                 return new RegisterResult(false, "Passwords do not match.");
 
-            // 2. Check if email already exists in this tenant
+            // 2. Find tenant by slug ← ADD HERE
+            var tenant = await _db.Tenants
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(
+                    t => t.Slug == request.TenantSlug.ToLower(),
+                    cancellationToken);
+            
+            if (tenant == null)
+                return new RegisterResult(
+                    false, "Invalid tenant. Please check your registration link.");
+
+            if (!tenant.IsActive)
+                return new RegisterResult(
+                    false, "This organization account is currently inactive.");
+
+            // 3. Check if email already exists in this tenant
             var exists = await _db.Users
                 .IgnoreQueryFilters() //— bypasses global filter to check all users
                 .AnyAsync(u => u.Email == request.Email.ToLower() 
@@ -41,12 +56,13 @@ namespace SupportDeskPro.Application.Features.Auth.Register
                 return new RegisterResult(false,
                     "An account with this email already exists.");
 
-            // 3. Hash password
-            var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+            // 4. Hash password
+            var passwordHash = _passwordHasher.Hash(request.Password);
 
-            // 4. Create user
+            // 5. Create user
             var user = new User
             {
+                TenantId = tenant.Id,
                 FirstName = request.FirstName.Trim(),
                 LastName = request.LastName.Trim(),
                 Email = request.Email.ToLower().Trim(),
@@ -56,7 +72,7 @@ namespace SupportDeskPro.Application.Features.Auth.Register
                 IsEmailVerified = false
             };
 
-            // 5. Generate email verification token
+            // 6. Generate email verification token
             var verificationToken = Convert.ToBase64String(
                 System.Security.Cryptography.RandomNumberGenerator
                     .GetBytes(32));
@@ -68,12 +84,12 @@ namespace SupportDeskPro.Application.Features.Auth.Register
                 ExpiresAt = DateTime.UtcNow.AddHours(24)
             };
 
-            // 6. Save to database
+            // 7. Save to database
             _db.Users.Add(user);
             _db.PasswordResetTokens.Add(resetToken);
             await _db.SaveChangesAsync(cancellationToken);
 
-            // 7. Send verification email
+            // 8. Send verification email
             await _emailService.SendEmailVerificationAsync(
                 user.Email, user.FirstName, verificationToken);
 

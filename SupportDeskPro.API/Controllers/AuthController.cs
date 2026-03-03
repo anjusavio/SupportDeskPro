@@ -27,7 +27,8 @@ public class AuthController : ControllerBase
             request.LastName,
             request.Email,
             request.Password,
-            request.ConfirmPassword);
+            request.ConfirmPassword,
+            request.TenantSlug);
 
         // Controller just SENDS a message, Doesn't know HOW login works - Doesn't care which class handles it
         var result = await _mediator.Send(command);

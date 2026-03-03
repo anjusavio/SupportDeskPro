@@ -8,7 +8,8 @@ namespace SupportDeskPro.Application.Features.Auth.Register
      string LastName,
      string Email,
      string Password,
-     string ConfirmPassword
+     string ConfirmPassword,
+     string TenantSlug //— which company they belong to
  ) : IRequest<RegisterResult>;
 
     public record RegisterResult(bool Success, string Message);

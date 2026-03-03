@@ -46,7 +46,8 @@ public class GetUsersQueryHandler
 
         var totalCount = await query.CountAsync(cancellationToken);
 
-        Console.WriteLine(query.ToQueryString());
+        //check generated SQL for debugging
+        // Console.WriteLine(query.ToQueryString()); 
 
 
         var items = await query
