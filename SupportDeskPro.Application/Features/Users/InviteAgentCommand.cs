@@ -4,7 +4,7 @@ using MediatR;
 namespace SupportDeskPro.Application.Features.Users.InviteAgent;
 
 public record InviteAgentCommand(
-    Guid TenantId,
+    Guid? TenantId,
     string FirstName,
     string LastName,
     string Email

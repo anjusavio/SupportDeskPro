@@ -35,11 +35,8 @@ public class TenantsController : ControllerBase
         [FromQuery] int pageSize = 20,
         [FromQuery] bool? isActive = null)
     {
-        var result = await _mediator.Send(
-            new GetTenantsQuery(page, pageSize, isActive));
-
-        return Ok(ApiResponse<PagedResult<TenantResponse>>.Ok(
-            result));
+        var result = await _mediator.Send(new GetTenantsQuery(page, pageSize, isActive));
+        return Ok(ApiResponse<PagedResult<TenantResponse>>.Ok(result));
     }
 
     // POST /api/tenants (SuperAdmin only)
@@ -56,10 +53,6 @@ public class TenantsController : ControllerBase
 
         var result = await _mediator.Send(command);
 
-        if (!result.Success)
-            return Conflict(
-                ApiResponse<string>.Fail(result.Message));
-
         return CreatedAtAction(
             nameof(GetAll),
             ApiResponse<string>.Ok(
@@ -72,15 +65,8 @@ public class TenantsController : ControllerBase
     [Authorize(Roles = "SuperAdmin")]
     public async Task<IActionResult> UpdateStatus(Guid id,[FromBody] UpdateTenantStatusRequest request)
     {
-        var result = await _mediator.Send(
-            new UpdateTenantStatusCommand(id, request.IsActive));
-
-        if (!result.Success)
-            return NotFound(
-                ApiResponse<string>.Fail(result.Message));
-
-        return Ok(ApiResponse<string>.Ok(
-            result.Message, result.Message));
+        var result = await _mediator.Send(new UpdateTenantStatusCommand(id, request.IsActive));
+        return Ok(ApiResponse<string>.Ok(result.Message, result.Message));
     }
 
     // GET /api/tenants/my (Admin only)
@@ -88,13 +74,7 @@ public class TenantsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetMyTenant()
     {
-        var result = await _mediator
-            .Send(new GetMyTenantQuery());
-
-        if (result == null)
-            return NotFound(
-                ApiResponse<string>.Fail("Tenant not found."));
-
+        var result = await _mediator.Send(new GetMyTenantQuery());
         return Ok(ApiResponse<TenantDetailResponse>.Ok(result));
     }
 
@@ -103,13 +83,7 @@ public class TenantsController : ControllerBase
     [Authorize(Roles = "SuperAdmin")]
     public async Task<IActionResult> GetById(Guid id)
     {
-        var result = await _mediator.Send(
-            new GetTenantByIdQuery(id));
-
-        if (result == null)
-            return NotFound(
-                ApiResponse<string>.Fail("Tenant not found."));
-
+        var result = await _mediator.Send(new GetTenantByIdQuery(id));
         return Ok(ApiResponse<TenantDetailResponse>.Ok(result));
     }
 
@@ -128,12 +102,7 @@ public class TenantsController : ControllerBase
                 request.MaxAgents,
                 request.MaxTickets));
 
-        if (!result.Success)
-            return NotFound(
-                ApiResponse<string>.Fail(result.Message));
-
-        return Ok(ApiResponse<string>.Ok(
-            result.Message, result.Message));
+        return Ok(ApiResponse<string>.Ok( result.Message, result.Message));
     }
 
     // PUT /api/tenants/my/settings (Admin only)
@@ -143,9 +112,6 @@ public class TenantsController : ControllerBase
         [FromBody] UpdateTenantSettingsRequest request,
         [FromServices] ICurrentTenantService tenantService)
     {
-        if (tenantService.TenantId == null)
-            return BadRequest(
-                ApiResponse<string>.Fail("Tenant not found."));
 
         var result = await _mediator.Send(
             new UpdateTenantSettingsCommand(
@@ -157,11 +123,6 @@ public class TenantsController : ControllerBase
                 request.AutoCloseAfterDays,
                 request.AllowCustomerSelfRegistration));
 
-        if (!result.Success)
-            return NotFound(
-                ApiResponse<string>.Fail(result.Message));
-
-        return Ok(ApiResponse<string>.Ok(
-            result.Message, result.Message));
+        return Ok(ApiResponse<string>.Ok(result.Message, result.Message));
     }
 }

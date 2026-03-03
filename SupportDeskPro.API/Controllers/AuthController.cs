@@ -33,21 +33,21 @@ public class AuthController : ControllerBase
         // Controller just SENDS a message, Doesn't know HOW login works - Doesn't care which class handles it
         var result = await _mediator.Send(command);
 
-        if (!result.Success)
-            return BadRequest(ApiResponse<string>.Fail(result.Message));
-
-        return Ok(ApiResponse<string>.Ok("Registration successful",result.Message));
+        //return Ok(ApiResponse<string>.Ok("Registration successful",result.Message));
+        return Ok(result.Message);
     }
 
+    // <summary>
+    /// Handles user login — no error handling needed here.
+    /// All exceptions thrown by handler are caught by ExceptionMiddleware.
+    /// Controller responsibility: receive HTTP request, send MediatR command, return response.
+    /// </summary>
     // POST /api/auth/login
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         var query = new LoginQuery(request.Email, request.Password);
         var result = await _mediator.Send(query);
-
-        if (!result.Success)
-            return Unauthorized(ApiResponse<string>.Fail(result.Message!));
 
         return Ok(ApiResponse<LoginResponse>.Ok(result.Response!));
     }

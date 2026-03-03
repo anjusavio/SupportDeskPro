@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SupportDeskPro.Application.Interfaces;
 using SupportDeskPro.Domain.Enums;
+using SupportDeskPro.Domain.Exceptions;
 
 namespace SupportDeskPro.Application.Features.Tenants.UpdateTenant;
 
@@ -27,7 +28,7 @@ public class UpdateTenantCommandHandler
                 cancellationToken);
 
         if (tenant == null)
-            return new UpdateTenantResult(false, "Tenant not found.");
+            throw new NotFoundException("Tenant", request.TenantId);
 
         tenant.Name = request.Name.Trim();
         tenant.PlanType = (PlanType)request.PlanType;

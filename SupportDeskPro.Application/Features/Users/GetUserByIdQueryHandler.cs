@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SupportDeskPro.Application.Interfaces;
 using SupportDeskPro.Contracts.Users;
+using SupportDeskPro.Domain.Exceptions;
 
 namespace SupportDeskPro.Application.Features.Users.GetUserById;
 
@@ -24,7 +25,8 @@ public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, UserRes
                 u => u.Id == request.UserId,
                 cancellationToken);
 
-        if (user == null) return null;
+        if (user == null)
+            throw new NotFoundException("User", request.UserId);
 
         return new UserResponse(
             user.Id,

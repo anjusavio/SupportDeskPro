@@ -2,6 +2,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SupportDeskPro.Application.Interfaces;
+using SupportDeskPro.Domain.Exceptions;
 
 namespace SupportDeskPro.Application.Features.Users.UpdateProfile;
 
@@ -19,20 +20,25 @@ public class UpdateProfileCommandHandler
         UpdateProfileCommand request,
         CancellationToken cancellationToken)
     {
-        var user = await _db.Users
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(
-                u => u.Id == request.UserId,
-                cancellationToken);
+        // Validate userId claim exists
+    if (string.IsNullOrEmpty(request.UserId))
+            throw new ForbiddenException("User identity could not be determined.");
 
-        if (user == null)
-            return new UpdateProfileResult(false, "User not found.");
+        // Parse userId
+        if (!Guid.TryParse(request.UserId, out var userId))
+            throw new ForbiddenException( "Invalid user identity.");
+
+        var user = await _db.Users
+           .IgnoreQueryFilters()
+           .FirstOrDefaultAsync(
+               u => u.Id == userId,
+               cancellationToken)
+           ?? throw new NotFoundException("User", userId);
 
         user.FirstName = request.FirstName.Trim();
         user.LastName = request.LastName.Trim();
         await _db.SaveChangesAsync(cancellationToken);
 
-        return new UpdateProfileResult(
-            true, "Profile updated successfully.");
+        return new UpdateProfileResult(true, "Profile updated successfully.");
     }
 }

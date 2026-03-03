@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SupportDeskPro.Application.Interfaces;
 using SupportDeskPro.Domain.Enums;
+using SupportDeskPro.Domain.Exceptions;
 
 namespace SupportDeskPro.Application.Features.Users.UpdateUserRole;
 
@@ -21,7 +22,8 @@ public class UpdateUserRoleCommandHandler : IRequestHandler<UpdateUserRoleComman
     {
         // Only Agent(3) and Customer(4) roles allowed
         if (request.Role != 3 && request.Role != 4)
-            return new UpdateUserRoleResult( false,"Role must be Agent(3) or Customer(4) only.");
+            throw new BusinessValidationException(
+                "Role must be Agent(3) or Customer(4) only.");
 
         var user = await _db.Users
             .FirstOrDefaultAsync(
@@ -29,7 +31,7 @@ public class UpdateUserRoleCommandHandler : IRequestHandler<UpdateUserRoleComman
                 cancellationToken);
 
         if (user == null)
-            return new UpdateUserRoleResult(false, "User not found.");
+            throw new NotFoundException("User", request.UserId);
 
         user.Role = (UserRole)request.Role;
         await _db.SaveChangesAsync(cancellationToken);

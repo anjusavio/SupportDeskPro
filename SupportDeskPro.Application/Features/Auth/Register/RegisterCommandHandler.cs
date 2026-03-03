@@ -1,8 +1,9 @@
 ﻿using MediatR;
+using Microsoft.EntityFrameworkCore;
 using SupportDeskPro.Application.Interfaces;
 using SupportDeskPro.Domain.Entities;
 using SupportDeskPro.Domain.Enums;
-using Microsoft.EntityFrameworkCore;
+using SupportDeskPro.Domain.Exceptions;
 
 namespace SupportDeskPro.Application.Features.Auth.Register
 {
@@ -37,9 +38,11 @@ namespace SupportDeskPro.Application.Features.Auth.Register
                     t => t.Slug == request.TenantSlug.ToLower(),
                     cancellationToken);
             
+            //if (tenant == null)
+            //    return new RegisterResult(
+            //        false, "Invalid tenant. Please check your registration link.");
             if (tenant == null)
-                return new RegisterResult(
-                    false, "Invalid tenant. Please check your registration link.");
+                throw new NotFoundException("Tenant", request.TenantSlug);
 
             if (!tenant.IsActive)
                 return new RegisterResult(
@@ -53,8 +56,7 @@ namespace SupportDeskPro.Application.Features.Auth.Register
                     cancellationToken);
 
             if (exists)
-                return new RegisterResult(false,
-                    "An account with this email already exists.");
+                throw new ConflictException("An account with this email already exists.");
 
             // 4. Hash password
             var passwordHash = _passwordHasher.Hash(request.Password);

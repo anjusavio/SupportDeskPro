@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SupportDeskPro.Application.Interfaces;
+using SupportDeskPro.Domain.Exceptions;
 
 namespace SupportDeskPro.Application.Features.Tenants.UpdateTenantStatus;
 
@@ -26,7 +27,7 @@ public class UpdateTenantStatusCommandHandler
                 cancellationToken);
 
         if (tenant == null)
-            return new UpdateTenantStatusResult(false, "Tenant not found.");
+            throw new NotFoundException("Tenant", request.TenantId);
 
         tenant.IsActive = request.IsActive;
         await _db.SaveChangesAsync(cancellationToken);

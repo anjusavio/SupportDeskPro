@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using SupportDeskPro.Application.Interfaces;
 using SupportDeskPro.Contracts.Tenants;
+using SupportDeskPro.Domain.Exceptions;
 
 namespace SupportDeskPro.Application.Features.Tenants.GetMyTenant;
 
@@ -30,7 +31,8 @@ public class GetMyTenantQueryHandler
                 t => t.Id == _tenantService.TenantId,
                 cancellationToken);
 
-        if (tenant == null) return null;
+        if (tenant == null)
+            throw new NotFoundException("Tenant", _tenantService.TenantId);
 
         return new TenantDetailResponse(
             tenant.Id,

@@ -2,6 +2,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SupportDeskPro.Application.Interfaces;
+using SupportDeskPro.Domain.Exceptions;
 
 namespace SupportDeskPro.Application.Features.Users.UpdateUserStatus;
 
@@ -25,14 +26,12 @@ public class UpdateUserStatusCommandHandler
                 cancellationToken);
 
         if (user == null)
-            return new UpdateUserStatusResult(
-                false, "User not found.");
+            throw new NotFoundException("User", request.UserId); //404 Not Found
 
         user.IsActive = request.IsActive;
         await _db.SaveChangesAsync(cancellationToken);
 
         var status = request.IsActive ? "activated" : "deactivated";
-        return new UpdateUserStatusResult(
-            true, $"User {status} successfully.");
+        return new UpdateUserStatusResult(true, $"User {status} successfully.");
     }
 }

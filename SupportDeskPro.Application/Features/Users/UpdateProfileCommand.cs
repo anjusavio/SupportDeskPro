@@ -4,7 +4,7 @@ using MediatR;
 namespace SupportDeskPro.Application.Features.Users.UpdateProfile;
 
 public record UpdateProfileCommand(
-    Guid UserId,
+    string? UserId,
     string FirstName,
     string LastName
 ) : IRequest<UpdateProfileResult>;

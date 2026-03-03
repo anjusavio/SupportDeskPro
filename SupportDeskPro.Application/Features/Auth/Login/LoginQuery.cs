@@ -5,4 +5,4 @@ namespace SupportDeskPro.Application.Features.Auth.Login;
 
 public record LoginQuery(string Email,string Password) : IRequest<LoginResult>;
 
-public record LoginResult(bool Success,string? Message,LoginResponse? Response);
+public record LoginResult(LoginResponse? Response);

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SupportDeskPro.Application.Interfaces;
 using SupportDeskPro.Domain.Entities;
 using SupportDeskPro.Domain.Enums;
+using SupportDeskPro.Domain.Exceptions;
 
 namespace SupportDeskPro.Application.Features.Users.InviteAgent;
 
@@ -28,14 +29,17 @@ public class InviteAgentCommandHandler
         InviteAgentCommand request,
         CancellationToken cancellationToken)
     {
+        if (request.TenantId == null)
+            throw new ForbiddenException(
+                "No tenant associated with this account.");
+
         // 1. Check email not already in use in this tenant
         var exists = await _db.Users
             .AnyAsync(u => u.Email == request.Email.ToLower(),
                 cancellationToken);
 
         if (exists)
-            return new InviteAgentResult(
-                false, "An agent with this email already exists.");
+            throw new ConflictException("An agent with this email already exists");
 
         // 2. Generate temporary password
         var tempPassword = GenerateTempPassword();
@@ -63,8 +67,7 @@ public class InviteAgentCommandHandler
             agent.FirstName,
             tempPassword);
 
-        return new InviteAgentResult(
-            true, "Agent invited successfully.", agent.Id);
+        return new InviteAgentResult(true, "Agent invited successfully.", agent.Id);
     }
 
     private static string GenerateTempPassword()

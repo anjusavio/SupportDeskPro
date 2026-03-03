@@ -13,13 +13,7 @@ using SupportDeskPro.Application.Features.Users.UpdateUserStatus;
 using SupportDeskPro.Application.Interfaces;
 using SupportDeskPro.Contracts.Common;
 using SupportDeskPro.Contracts.Users;
-using SupportDeskPro.Domain.Entities;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.Security.Claims;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 
 namespace SupportDeskPro.API.Controllers;
@@ -62,22 +56,15 @@ public class UsersController : ControllerBase
         [FromBody] InviteAgentRequest request,
         [FromServices] ICurrentTenantService tenantService)
     {
-        if (tenantService.TenantId == null)
-            return BadRequest(ApiResponse<string>.Fail("Tenant not found."));
 
         var result = await _mediator.Send(
             new InviteAgentCommand(
-                tenantService.TenantId.Value,
+                tenantService.TenantId,
                 request.FirstName,
                 request.LastName,
                 request.Email));
 
-        if (!result.Success)
-            return Conflict( ApiResponse<string>.Fail(result.Message));
-
-        return Ok(ApiResponse<string>.Ok(
-            result.UserId.ToString()!,
-            result.Message));
+        return Ok(ApiResponse<string>.Ok(result.UserId.ToString()!,result.Message));
     }
 
     // PATCH /api/users/{id}/status (Admin only)
@@ -85,12 +72,7 @@ public class UsersController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateStatus(Guid id,[FromBody] UpdateUserStatusRequest request)
     {
-        var result = await _mediator.Send(
-            new UpdateUserStatusCommand(id, request.IsActive));
-
-        if (!result.Success)
-            return NotFound(ApiResponse<string>.Fail(result.Message));
-
+        var result = await _mediator.Send( new UpdateUserStatusCommand(id, request.IsActive));
         return Ok(ApiResponse<string>.Ok(result.Message, result.Message));
     }
 
@@ -98,20 +80,11 @@ public class UsersController : ControllerBase
     [HttpPut("profile")]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
     {
-        var userIdClaim = User.FindFirst(
-            ClaimTypes.NameIdentifier)?.Value;
-
-        if (userIdClaim == null)
-            return Unauthorized();
-
         var result = await _mediator.Send(
-            new UpdateProfileCommand(
-                Guid.Parse(userIdClaim),
-                request.FirstName,
-                request.LastName));
-
-        if (!result.Success)
-            return NotFound( ApiResponse<string>.Fail(result.Message));
+        new UpdateProfileCommand(
+            User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+            request.FirstName,
+            request.LastName));
 
         return Ok(ApiResponse<string>.Ok( result.Message, result.Message));
     }
@@ -122,7 +95,6 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> GetAgents()
     {
         var result = await _mediator.Send(new GetAgentsQuery());
-
         return Ok(ApiResponse<List<AgentSummaryResponse>>.Ok(result));
     }
 
@@ -132,7 +104,6 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> GetAgentWorkload()
     {
         var result = await _mediator.Send(new GetAgentWorkloadQuery());
-
         return Ok(ApiResponse<List<AgentWorkloadResponse>>.Ok(result));
     }
 
@@ -143,10 +114,6 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> GetById(Guid id)
     {
         var result = await _mediator.Send( new GetUserByIdQuery(id));
-
-        if (result == null)
-            return NotFound(ApiResponse<string>.Fail("User not found."));
-
         return Ok(ApiResponse<UserResponse>.Ok(result));
     }
 
@@ -157,12 +124,7 @@ public class UsersController : ControllerBase
         Guid id,
         [FromBody] UpdateUserRoleRequest request)
     {
-        var result = await _mediator.Send(
-            new UpdateUserRoleCommand(id, request.Role));
-
-        if (!result.Success)
-            return BadRequest(ApiResponse<string>.Fail(result.Message));
-
+        var result = await _mediator.Send(new UpdateUserRoleCommand(id, request.Role));
         return Ok(ApiResponse<string>.Ok(result.Message, result.Message));
     }
 }

@@ -4,4 +4,4 @@ using SupportDeskPro.Contracts.Users;
 
 namespace SupportDeskPro.Application.Features.Users.GetUserById;
 
-public record GetUserByIdQuery(Guid UserId) : IRequest<UserResponse?>;
+public record GetUserByIdQuery(Guid UserId) : IRequest<UserResponse>;

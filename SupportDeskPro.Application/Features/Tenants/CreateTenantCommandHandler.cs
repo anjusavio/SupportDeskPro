@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SupportDeskPro.Application.Interfaces;
 using SupportDeskPro.Domain.Entities;
 using SupportDeskPro.Domain.Enums;
+using SupportDeskPro.Domain.Exceptions;
 
 namespace SupportDeskPro.Application.Features.Tenants.CreateTenant;
 
@@ -26,8 +27,8 @@ public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, C
                 cancellationToken);
 
         if (slugExists)
-            return new CreateTenantResult(
-                false, "Slug already exists. Choose a different one.");
+            throw new ConflictException(
+                "Slug already exists. Choose a different one.");
 
         // 2. Create tenant
         var tenant = new Tenant

@@ -2,6 +2,8 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SupportDeskPro.Application.Interfaces;
+using SupportDeskPro.Domain.Entities;
+using SupportDeskPro.Domain.Exceptions;
 
 namespace SupportDeskPro.Application.Features.Tenants.UpdateTenantSettings;
 
@@ -24,9 +26,15 @@ public class UpdateTenantSettingsCommandHandler
                 s => s.TenantId == request.TenantId,
                 cancellationToken);
 
+        //if (settings == null)
+        //    return new UpdateTenantSettingsResult(
+        //        false, "Tenant settings not found.");
+
         if (settings == null)
-            return new UpdateTenantSettingsResult(
-                false, "Tenant settings not found.");
+            throw new NotFoundException("settings", request.TenantId);
+
+        if (request.TenantId == null)
+            throw new BusinessValidationException("Tenant context is missing.");
 
         settings.TimeZone = request.TimeZone;
         settings.WorkingHoursStart = TimeOnly.Parse(request.WorkingHoursStart);
