@@ -31,6 +31,12 @@ public class CategoriesController : ControllerBase
         _mediator = mediator;
     }
 
+    /// <summary>
+    /// Retrieves paginated list of all categories in the current tenant.
+    /// Supports filtering by active status.
+    /// Includes ticket count per category and parent category name.
+    /// Results ordered by SortOrder then alphabetically by name.
+    /// </summary>
     // GET /api/categories (Admin only)
     [HttpGet]
     [Authorize(Roles = "Admin")]
@@ -43,6 +49,11 @@ public class CategoriesController : ControllerBase
         return Ok(ApiResponse<PagedResult<CategoryResponse>>.Ok(result));
     }
 
+    /// <summary>
+    /// Retrieves single category detail by Id including parent category name
+    /// and total ticket count assigned to this category.
+    /// Returns 404 if category does not exist in the current tenant.
+    /// </summary>
     // GET /api/categories/{id} (Admin only)
     [HttpGet("{id}")]
     [Authorize(Roles = "Admin")]
@@ -52,6 +63,13 @@ public class CategoriesController : ControllerBase
         return Ok(ApiResponse<CategoryResponse>.Ok(result));
     }
 
+    /// <summary>
+    /// Creates a new ticket category in the current tenant.
+    /// Supports parent/sub-category hierarchy via ParentCategoryId.
+    /// SortOrder controls display order in dropdowns and lists.
+    /// Returns 409 if category name already exists in the tenant.
+    /// Returns 404 if specified ParentCategoryId does not exist.
+    /// </summary>
     // POST /api/categories (Admin only)
     [HttpPost]
     [Authorize(Roles = "Admin")]
@@ -71,6 +89,13 @@ public class CategoriesController : ControllerBase
             ApiResponse<string>.Ok( result.CategoryId.ToString()!, result.Message));
     }
 
+    /// <summary>
+    /// Updates category name, description, parent category and sort order.
+    /// Validates name uniqueness excluding the current category.
+    /// Prevents circular reference — category cannot be its own parent.
+    /// Returns 404 if category does not exist in the current tenant.
+    /// Returns 409 if updated name already exists in another category.
+    /// </summary>
     // PUT /api/categories/{id} (Admin only)
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin")]
@@ -89,6 +114,12 @@ public class CategoriesController : ControllerBase
         return Ok(ApiResponse<string>.Ok(result.Message));
     }
 
+    /// <summary>
+    /// Activates or deactivates a category.
+    /// Deactivated categories are hidden from ticket creation dropdown.
+    /// Existing tickets retain their category assignment — not affected.
+    /// Returns 404 if category does not exist in the current tenant.
+    /// </summary>
     // PATCH /api/categories/{id}/status (Admin only)
     [HttpPatch("{id}/status")]
     [Authorize(Roles = "Admin")]
@@ -100,6 +131,12 @@ public class CategoriesController : ControllerBase
         return Ok(ApiResponse<string>.Ok(result.Message));
     }
 
+    /// <summary>
+    /// Retrieves all active categories for ticket creation dropdown.
+    /// Available to all authenticated roles — Customer, Agent and Admin.
+    /// Returns Id, name and parent category for each active category.
+    /// Results ordered by SortOrder then alphabetically by name.
+    /// </summary>
     // GET /api/categories/active (All authenticated roles)
     [HttpGet("active")]
     public async Task<IActionResult> GetActive()

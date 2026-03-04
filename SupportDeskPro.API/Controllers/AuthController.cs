@@ -7,6 +7,11 @@ using SupportDeskPro.Contracts.Common;
 
 namespace SupportDeskPro.API.Controllers;
 
+/// <summary>
+/// REST controller for authentication — register, login and current user info.
+/// No authorization required for register and login endpoints.
+/// JWT token required for GET /me endpoint.
+/// </summary>
 [ApiController]
 [Route("api/auth")]
 public class AuthController : ControllerBase
@@ -18,6 +23,13 @@ public class AuthController : ControllerBase
         _mediator = mediator;
     }
 
+    /// <summary>
+    /// Registers a new customer account for the specified tenant.
+    /// TenantSlug identifies which organization the customer belongs to.
+    /// Validates tenant exists and is active before creating the account.
+    /// Sends email verification link after successful registration.
+    /// Returns 409 if email already exists in the tenant.
+    /// </summary>
     // POST /api/auth/register
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
@@ -37,10 +49,14 @@ public class AuthController : ControllerBase
         return Ok(result.Message);
     }
 
-    // <summary>
-    /// Handles user login — no error handling needed here.
-    /// All exceptions thrown by handler are caught by ExceptionMiddleware.
-    /// Controller responsibility: receive HTTP request, send MediatR command, return response.
+
+    /// <summary>
+    /// Authenticates a user and returns JWT access token and refresh token.
+    /// Access token expires in 15 minutes — use refresh token to get a new one.
+    /// Returns 400 for invalid credentials — intentionally vague to prevent
+    /// user enumeration attacks.
+    /// Returns 400 if account is deactivated.
+    /// All exceptions handled by global ExceptionMiddleware.
     /// </summary>
     // POST /api/auth/login
     [HttpPost("login")]
@@ -52,6 +68,13 @@ public class AuthController : ControllerBase
         return Ok(ApiResponse<LoginResponse>.Ok(result.Response!));
     }
 
+    /// <summary>
+    /// Returns the currently authenticated user's profile from JWT claims.
+    /// Does not hit the database — reads directly from token claims.
+    /// Useful for frontend to display logged-in user info on page load.
+    /// Returns UserId, Email, Role and TenantName from token.
+    /// Requires valid JWT token in Authorization header.
+    /// </summary>
     // GET /api/auth/me
     [HttpGet("me")]
     [Microsoft.AspNetCore.Authorization.Authorize]

@@ -27,6 +27,12 @@ public class TenantsController : ControllerBase
         _mediator = mediator;
     }
 
+    // TenantsController
+    /// <summary>
+    /// Retrieves paginated list of all tenants across the platform.
+    /// Supports filtering by active status.
+    /// SuperAdmin only — tenant Admins use GET /api/tenants/my instead.
+    /// </summary>
     // GET /api/tenants (SuperAdmin only)
     [HttpGet]
     [Authorize(Roles = "SuperAdmin")]
