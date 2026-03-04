@@ -115,7 +115,7 @@ public class TenantsController : ControllerBase
 
         var result = await _mediator.Send(
             new UpdateTenantSettingsCommand(
-                tenantService.TenantId.Value,
+                tenantService.TenantId,
                 request.TimeZone,
                 request.WorkingHoursStart,
                 request.WorkingHoursEnd,

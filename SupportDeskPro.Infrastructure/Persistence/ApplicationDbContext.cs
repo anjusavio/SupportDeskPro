@@ -27,8 +27,8 @@ namespace SupportDeskPro.Infrastructure.Persistence
         public DbSet<Ticket> Tickets => Set<Ticket>();
         public DbSet<TicketComment> TicketComments => Set<TicketComment>();
         public DbSet<TicketAttachment> TicketAttachments => Set<TicketAttachment>();
-        public DbSet<TicketStatusHistory> TicketStatusHistories => Set<TicketStatusHistory>();
-        public DbSet<TicketAssignmentHistory> TicketAssignmentHistories => Set<TicketAssignmentHistory>();
+        public DbSet<TicketStatusHistory> TicketStatusHistory => Set<TicketStatusHistory>();
+        public DbSet<TicketAssignmentHistory> TicketAssignmentHistory => Set<TicketAssignmentHistory>();
         public DbSet<Notification> Notifications => Set<Notification>();
         public DbSet<EmailLog> EmailLogs => Set<EmailLog>();
         public DbSet<AuditLog> AuditLogs => Set<AuditLog>();

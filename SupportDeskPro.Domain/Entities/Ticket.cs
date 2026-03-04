@@ -29,6 +29,7 @@ namespace SupportDeskPro.Domain.Entities
         public SLABreachType? SLABreachType { get; set; }
 
         // AI fields
+        // AISuggestedCategoryId- AI recommended- nullable, may differ from actual -used to show AI suggestion in UI
         public Guid? AISuggestedCategoryId { get; set; }
         public TicketPriority? AISuggestedPriority { get; set; }
         public decimal? AICategorizationConfidence { get; set; }
@@ -54,5 +55,6 @@ namespace SupportDeskPro.Domain.Entities
         public ICollection<TicketStatusHistory> StatusHistory { get; set; } = new List<TicketStatusHistory>();
         public ICollection<TicketAssignmentHistory> AssignmentHistory { get; set; } = new List<TicketAssignmentHistory>();
         public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+        public Category? AISuggestedCategory { get; set; }
     }
 }

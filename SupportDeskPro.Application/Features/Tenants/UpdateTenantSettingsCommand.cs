@@ -4,7 +4,7 @@ using MediatR;
 namespace SupportDeskPro.Application.Features.Tenants.UpdateTenantSettings;
 
 public record UpdateTenantSettingsCommand(
-    Guid TenantId,
+    Guid? TenantId,
     string TimeZone,
     string WorkingHoursStart,
     string WorkingHoursEnd,

@@ -113,5 +113,11 @@ public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
             .HasForeignKey(t => t.SLAPolicyId)
             .OnDelete(DeleteBehavior.SetNull) //If SLA policy is deleted, Set SLAPolicyId to NULL on tickets
             .IsRequired(false);
+       
+        // AI suggested category 
+        builder.HasOne(t => t.AISuggestedCategory)
+        .WithMany()
+        .HasForeignKey(t => t.AISuggestedCategoryId)
+        .OnDelete(DeleteBehavior.SetNull);
     }
 }

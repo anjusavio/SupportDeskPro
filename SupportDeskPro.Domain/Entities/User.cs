@@ -23,6 +23,7 @@ namespace SupportDeskPro.Domain.Entities
         // Computed property — not stored in DB
         public string FullName => $"{FirstName} {LastName}";
 
+
         // Navigation properties - define relationships between tables.
         public Tenant? Tenant { get; set; }
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();

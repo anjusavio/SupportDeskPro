@@ -53,7 +53,7 @@ public class InviteAgentCommandHandler
             LastName = request.LastName.Trim(),
             Email = request.Email.ToLower().Trim(),
             PasswordHash = passwordHash,
-            Role = UserRole.Agent,
+            Role = UserRole.Agent,//3
             IsActive = true,
             IsEmailVerified = true   // Admin-invited agents skip verification
         };

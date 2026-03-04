@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using SupportDeskPro.Application.Interfaces;
 using SupportDeskPro.Contracts.Tenants;
+using SupportDeskPro.Domain.Entities;
 using SupportDeskPro.Domain.Exceptions;
 
 namespace SupportDeskPro.Application.Features.Tenants.GetMyTenant;
@@ -25,12 +26,18 @@ public class GetMyTenantQueryHandler
         GetMyTenantQuery request,
         CancellationToken cancellationToken)
     {
+        // Check TenantId from JWT first -Tenant null means no tenant in JWT token , so auth issue
+        if (_tenantService.TenantId == null)
+            throw new ForbiddenException(
+                "No tenant associated with this account.");
+
         var tenant = await _db.Tenants
             .Include(t => t.Settings)
             .FirstOrDefaultAsync(
                 t => t.Id == _tenantService.TenantId,
                 cancellationToken);
 
+        //TenantId exists in JWT but Tenant record not found in DB 
         if (tenant == null)
             throw new NotFoundException("Tenant", _tenantService.TenantId);
 

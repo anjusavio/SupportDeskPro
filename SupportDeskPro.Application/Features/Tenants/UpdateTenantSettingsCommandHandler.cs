@@ -21,32 +21,27 @@ public class UpdateTenantSettingsCommandHandler
         UpdateTenantSettingsCommand request,
         CancellationToken cancellationToken)
     {
+        // Auth check — TenantId must exist in JWT
+        if (request.TenantId == null)
+            throw new ForbiddenException("No tenant associated with this account.");
+
         var settings = await _db.TenantSettings
             .FirstOrDefaultAsync(
-                s => s.TenantId == request.TenantId,
+                s => s.TenantId == request.TenantId.Value,
                 cancellationToken);
 
-        //if (settings == null)
-        //    return new UpdateTenantSettingsResult(
-        //        false, "Tenant settings not found.");
-
         if (settings == null)
-            throw new NotFoundException("settings", request.TenantId);
-
-        if (request.TenantId == null)
-            throw new BusinessValidationException("Tenant context is missing.");
+            throw new NotFoundException("TenantSettings", request.TenantId.Value);
 
         settings.TimeZone = request.TimeZone;
         settings.WorkingHoursStart = TimeOnly.Parse(request.WorkingHoursStart);
         settings.WorkingHoursEnd = TimeOnly.Parse(request.WorkingHoursEnd);
         settings.WorkingDays = request.WorkingDays;
         settings.AutoCloseAfterDays = request.AutoCloseAfterDays;
-        settings.AllowCustomerSelfRegistration =
-            request.AllowCustomerSelfRegistration;
+        settings.AllowCustomerSelfRegistration = request.AllowCustomerSelfRegistration;
 
         await _db.SaveChangesAsync(cancellationToken);
 
-        return new UpdateTenantSettingsResult(
-            true, "Settings updated successfully.");
+        return new UpdateTenantSettingsResult(true, "Settings updated successfully.");
     }
 }
