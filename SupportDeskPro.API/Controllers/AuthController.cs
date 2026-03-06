@@ -46,7 +46,7 @@ public class AuthController : ControllerBase
         var result = await _mediator.Send(command);
 
         //return Ok(ApiResponse<string>.Ok("Registration successful",result.Message));
-        return Ok(result.Message);
+        return Ok(ApiResponse<string>.Ok(result.Message));
     }
 
 

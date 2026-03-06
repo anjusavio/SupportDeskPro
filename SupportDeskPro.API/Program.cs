@@ -84,6 +84,14 @@ try
         });
     });
 
+    // Makes ALL .NET responses camelCase automatically
+    builder.Services.AddControllers()
+        .AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.PropertyNamingPolicy
+                = System.Text.Json.JsonNamingPolicy.CamelCase;
+        });
+
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("AllowFrontend",
