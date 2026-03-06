@@ -12,13 +12,17 @@
  * 
  * 3. Lazy Loading — loads page components only when needed.
  *    Reduces initial bundle size → faster first load 
+ * 
+ * 4.QueryClientProvider — wraps entire app so any component
+ *    Reduces initial bundle size → faster first load
+ *    can use React Query hooks for API data fetching.
  */
 import React from 'react';
 import {
   BrowserRouter,
   Routes,
   Route,
-  Navigate
+  Navigate,
 } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
@@ -48,8 +52,15 @@ const queryClient = new QueryClient({
 
 /**
  * ProtectedRoute — wraps routes that require authentication.
- * Redirects to /login if user is not authenticated.
- * Redirects based on role if wrong role tries to access.
+ * * 
+ * CONCEPT: Higher Order Component (HOC) pattern.
+ * Wraps any component and adds authentication check.
+ * Reusable — used for every protected page 
+ *
+ * Flow:
+ * Not logged in → redirect to /login
+ * Wrong role    → redirect to their home page
+ * Correct role  → render the page 
  */
 const ProtectedRoute = ({
   children,
