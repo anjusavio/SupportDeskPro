@@ -84,6 +84,18 @@ try
         });
     });
 
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("AllowFrontend",
+            policy =>
+            {
+                policy.WithOrigins("http://localhost:3000")
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
+            });
+    });
+
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -105,6 +117,7 @@ try
             "responded {StatusCode} in {Elapsed:0.0000}ms";
     });
     app.UseHttpsRedirection();
+    app.UseCors("AllowFrontend");
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();
