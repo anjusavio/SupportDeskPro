@@ -11,7 +11,7 @@
  * 
  * 2. Zod Schema Validation
  *    .min(8) → minimum 8 characters
- *    .regex() → must match pattern
+ *    .regex() → must match pattern -email
  *    .refine() → custom validation (password match)
  *    All errors shown automatically on submit
  * 
@@ -87,6 +87,7 @@ const registerSchema = z
 // TypeScript type inferred from Zod schema automatically
 type RegisterFormData = z.infer<typeof registerSchema>;
 
+//React.FunctionComponent without props - it MUST return JSX
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -115,8 +116,6 @@ const RegisterPage: React.FC = () => {
         tenantSlug: data.tenantSlug,
       });
 
-      console.log('Full response:', response);
-    console.log('Success value:', response.success);
 
       if (response.success) {
         toast.success('Account created! Please sign in.');
