@@ -5,6 +5,7 @@
 /// </summary>
 namespace SupportDeskPro.Domain.Exceptions;
 
+[System.Diagnostics.DebuggerNonUserCode]
 public class ConflictException : Exception
 {
     public ConflictException(string message) : base(message) { }

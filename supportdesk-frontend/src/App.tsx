@@ -31,8 +31,12 @@ import useAuthStore from './store/authStore';
 // Pages
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
+
+// Admin pages
 import AdminDashboardPage from './pages/admin/DashboardPage';
 import TicketsPage from './pages/admin/TicketsPage';
+
+// Customer pages
 import MyTicketsPage from './pages/customer/MyTicketsPage';
 import CreateTicketPage from './pages/customer/CreateTicketPage';
 
@@ -79,6 +83,8 @@ const ProtectedRoute = ({
   // Wrong role → redirect to their home
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {
     if (user.role === 'Customer') return <Navigate to="/my-tickets" replace />;
+    if (user.role === 'Agent') return <Navigate to ="/tickets" replace />;
+    if (user.role === 'Admin') return <Navigate to="/dashboard" replace />;
     return <Navigate to="/dashboard" replace />;
   }
 

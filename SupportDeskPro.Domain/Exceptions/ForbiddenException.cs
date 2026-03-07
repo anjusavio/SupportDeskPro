@@ -5,6 +5,7 @@
 /// </summary>
 namespace SupportDeskPro.Domain.Exceptions;
 
+[System.Diagnostics.DebuggerNonUserCode]
 public class ForbiddenException : Exception
 {
     public ForbiddenException(

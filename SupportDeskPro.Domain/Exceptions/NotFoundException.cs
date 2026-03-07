@@ -5,6 +5,7 @@
 /// </summary>
 namespace SupportDeskPro.Domain.Exceptions;
 
+[System.Diagnostics.DebuggerNonUserCode]
 public class NotFoundException : Exception
 {
     public NotFoundException(string entity, object key)

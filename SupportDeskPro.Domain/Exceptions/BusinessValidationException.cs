@@ -5,6 +5,7 @@
 /// </summary>
 namespace SupportDeskPro.Domain.Exceptions;
 
+[System.Diagnostics.DebuggerNonUserCode]
 public class BusinessValidationException : Exception
 {
     public BusinessValidationException(string message) : base(message) { }
