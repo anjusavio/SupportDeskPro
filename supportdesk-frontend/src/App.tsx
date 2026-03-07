@@ -27,6 +27,7 @@ import {
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import useAuthStore from './store/authStore';
+import TicketDetailPage from './pages/customer/TicketDetailPage';
 
 // Pages
 import LoginPage from './pages/auth/LoginPage';
@@ -130,6 +131,13 @@ function App() {
               <CreateTicketPage />
             </ProtectedRoute>
           } />
+
+          {/* Customer ticket detail */}
+            <Route path="/my-tickets/:id" element={
+              <ProtectedRoute allowedRoles={['Customer']}>
+                <TicketDetailPage />   {/* ← we will build this next */}
+              </ProtectedRoute>
+            } />
 
           {/* Default redirect */}
           <Route path="/" element={<Navigate to="/login" replace />} />
