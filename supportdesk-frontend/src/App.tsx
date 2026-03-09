@@ -135,7 +135,7 @@ function App() {
           {/* Customer ticket detail */}
             <Route path="/my-tickets/:id" element={
               <ProtectedRoute allowedRoles={['Customer']}>
-                <TicketDetailPage />   {/* ← we will build this next */}
+                <TicketDetailPage />   
               </ProtectedRoute>
             } />
 

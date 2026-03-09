@@ -19,3 +19,21 @@ export const getMyTicketsApi = async (
   const response = await axiosClient.get('/tickets/my', { params });
   return response.data;
 };
+
+//
+export interface CreateTicketRequest {
+  title: string;
+  description: string;
+  categoryId: string;
+  priority: number;
+}
+
+export const createTicketApi = async (
+  data: CreateTicketRequest
+): Promise<ApiResponse<string>> => {
+  const response = await axiosClient.post<ApiResponse<string>>(
+    '/tickets',
+    data
+  );
+  return response.data;
+};
