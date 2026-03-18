@@ -138,6 +138,16 @@ function App() {
                 <TicketDetailPage />   
               </ProtectedRoute>
             } />
+            
+            {/* accessible by ALL roles */}
+            <Route
+              path="/tickets/:id"
+              element={
+                <ProtectedRoute allowedRoles={["Customer", "Agent", "Admin", "SuperAdmin"]}>
+                    <TicketDetailPage />
+                </ProtectedRoute>
+              }
+            />
 
           {/* Default redirect */}
           <Route path="/" element={<Navigate to="/login" replace />} />

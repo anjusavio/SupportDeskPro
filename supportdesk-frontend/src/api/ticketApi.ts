@@ -37,3 +37,42 @@ export const createTicketApi = async (
   );
   return response.data;
 };
+
+// ── Ticket detail
+export const getTicketById = (id: number | string) =>
+  axiosClient.get(`/tickets/${id}`).then((r) => r.data.data);
+
+// ── Comments and attachments
+export const getComments = (ticketId: number | string) =>
+  axiosClient
+    .get(`/tickets/${ticketId}/comments`)
+    .then((r) => r.data.data);
+
+export const addComment = (
+  ticketId: number | string,
+  formData: FormData
+) =>
+  axiosClient.post(`/tickets/${ticketId}/comments`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+export const deleteAttachment = (
+  ticketId: number | string,
+  attachmentId: number
+) =>
+  axiosClient.delete(
+    `/tickets/${ticketId}/attachments/${attachmentId}`
+  );
+
+// ── Status 
+export const changeTicketStatus = (
+  ticketId: number | string,
+  status: string,
+  note?: string
+) =>
+  axiosClient.patch(`/tickets/${ticketId}/status`, { status, note });
+
+export const getStatusHistory = (ticketId: number | string) =>
+  axiosClient
+    .get(`/tickets/${ticketId}/status-history`)
+    .then((r) => r.data.data);
