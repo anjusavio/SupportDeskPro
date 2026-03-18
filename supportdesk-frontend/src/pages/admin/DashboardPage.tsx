@@ -95,6 +95,7 @@ const PRIORITY_CONFIG: Record<string, { label: string; dotColor: string }> = {
   Critical: { label: 'Critical', dotColor: 'bg-red-500' },
 };
 
+
 // Agent avatar background colors — cycles through list 
 const AVATAR_COLORS = [
   'bg-purple-500', 'bg-pink-500', 'bg-cyan-500',
@@ -121,7 +122,7 @@ function getTodayLabel(): string {
 // SUB-COMPONENT: StatCard — top summary metric card
 
 function StatCard({
-  label, value, sub, icon: Icon, iconBg, barColor,
+  label, value, sub, icon: Icon, iconBg, barColor,onClick
 }: {
   label: string;
   value: number | string;
@@ -129,9 +130,13 @@ function StatCard({
   icon: React.ElementType;
   iconBg: string;
   barColor: string;
+  onClick?: () => void; //  navigate to filtered ticket list 
 }) {
   return (
-    <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm
+    
+    <div
+     onClick={onClick} 
+     className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm
                     flex flex-col gap-3">
       <div className="flex items-start justify-between">
         <div>
@@ -155,6 +160,7 @@ function StatCard({
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  
 
   // ─── Query: GET /api/dashboard/admin ────────────────────────────────────
   const {
@@ -169,9 +175,9 @@ const DashboardPage: React.FC = () => {
         .get<ApiResponse<AdminDashboardResponse>>('/dashboard/admin')
         .then((r) => {
           if (!r.data.data) throw new Error('Failed to load dashboard');
-          return r.data.data; // AdminDashboardResponse ✅
+          return r.data.data; // AdminDashboardResponse 
         }),
-    refetchInterval: 60_000, // auto-refresh every 60 seconds ✅
+    refetchInterval: 60_000, // auto-refresh every 60 seconds 
   });
 
   // ─── Loading ─────────────────────────────────────────────────────────────
@@ -274,6 +280,7 @@ const DashboardPage: React.FC = () => {
             icon={Ticket}
             iconBg="bg-orange-400"
             barColor="bg-orange-400"
+            onClick={() => navigate('/tickets?status=1')} //Open Tickets card
           />
           <StatCard
             label="In Progress"
@@ -282,6 +289,7 @@ const DashboardPage: React.FC = () => {
             icon={Activity}
             iconBg="bg-yellow-400"
             barColor="bg-yellow-400"
+            onClick={() => navigate('/tickets?status=2')} //In Progress card
           />
           <StatCard
             label="Resolved Today"
@@ -290,6 +298,7 @@ const DashboardPage: React.FC = () => {
             icon={CheckCircle2}
             iconBg="bg-green-500"
             barColor="bg-green-500"
+            onClick={() => navigate('/tickets?status=3')} //Resolved Today card
           />
           <StatCard
             label="SLA Breached"
@@ -298,6 +307,7 @@ const DashboardPage: React.FC = () => {
             icon={AlertTriangle}
             iconBg={stats.slaBreachedCount > 0 ? 'bg-red-500' : 'bg-gray-400'}
             barColor={stats.slaBreachedCount > 0 ? 'bg-red-500' : 'bg-gray-300'}
+            onClick={() => navigate('/tickets?status=4')} //SLA Breached card
           />
         </div>
 

@@ -412,7 +412,7 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
 // ─────────────────────────────────────────────────────────────────────────────
 // SUB-COMPONENT: AssignAgentDropdown
 // Shows dropdown + Assign button — does NOT fire API on select change.
-// User must click Assign button to confirm ✅
+// User must click Assign button to confirm 
 // ─────────────────────────────────────────────────────────────────────────────
 
 function AssignAgentDropdown({

@@ -28,7 +28,7 @@ const axiosClient = axios.create({
  * REQUEST INTERCEPTOR
  * Runs before every API call — attaches JWT token automatically.
  * Without this: every API call needs manual Authorization header.
- * With this: token attached to ALL requests automatically ✅
+ * With this: token attached to ALL requests automatically 
  */
 axiosClient.interceptors.request.use(
   (config) => {
@@ -50,7 +50,7 @@ axiosClient.interceptors.request.use(
  * Runs after every API response arrives.
  * Handles 401 Unauthorized — clears token and redirects to login.
  * Without this: expired token shows blank screen or weird errors.
- * With this: auto-redirects to login when token expires ✅
+ * With this: auto-redirects to login when token expires 
  */
 axiosClient.interceptors.response.use(
   // Success — pass response through unchanged
