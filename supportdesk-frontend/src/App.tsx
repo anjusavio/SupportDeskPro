@@ -36,6 +36,7 @@ import RegisterPage from './pages/auth/RegisterPage';
 // Admin pages
 import AdminDashboardPage from './pages/admin/DashboardPage';
 import TicketsPage from './pages/admin/TicketsPage';
+import UsersPage from './pages/admin/UsersPage';
 
 // Customer pages
 import MyTicketsPage from './pages/customer/MyTicketsPage';
@@ -112,6 +113,11 @@ function App() {
               <AdminDashboardPage />
             </ProtectedRoute>
           } />
+          <Route path="/users" element={        
+              <ProtectedRoute allowedRoles={['Admin']}>
+                <UsersPage />
+              </ProtectedRoute>
+            } />
 
           <Route path="/tickets" element={
             <ProtectedRoute allowedRoles={['Admin', 'Agent']}>
