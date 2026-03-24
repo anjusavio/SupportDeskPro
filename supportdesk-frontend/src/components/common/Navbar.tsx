@@ -136,6 +136,14 @@ const Navbar: React.FC = () => {
                 </Link>
               )}
 
+            {/* // Agent Dasboard link only for Agents */}
+              {user?.role === 'Agent' && (
+                <Link to="/agent-dashboard" className={navLinkClass('/agent-dashboard')}>
+                  <LayoutDashboard size={16} />
+                  Dashboard
+                </Link>
+              )}
+
               {/* Admin + Agent */}
               {(user?.role === 'Admin' || user?.role === 'Agent') && (
                 <Link to="/tickets" className={navLinkClass('/tickets')}>
@@ -271,6 +279,12 @@ const Navbar: React.FC = () => {
               >
                 <LayoutDashboard size={16} />
                 Dashboard
+              </Link>
+            )}
+            {user?.role === 'Agent' && (
+              <Link to="/agent-dashboard" className={navLinkClass('/agent-dashboard')}
+                onClick={() => setIsMobileMenuOpen(false)}>
+                <LayoutDashboard size={16} /> Dashboard
               </Link>
             )}
             {(user?.role === 'Admin' || user?.role === 'Agent') && (

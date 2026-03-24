@@ -43,6 +43,9 @@ import CategoriesPage from './pages/admin/CategoriesPage';
 import MyTicketsPage from './pages/customer/MyTicketsPage';
 import CreateTicketPage from './pages/customer/CreateTicketPage';
 
+//AgentPages
+import AgentDashboardPage from './pages/agent/AgentDashboardPage';
+
 //shared
 import NotificationsPage from './pages/shared/NotificationsPage';
 
@@ -89,8 +92,8 @@ const ProtectedRoute = ({
   // Wrong role → redirect to their home
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {
     if (user.role === 'Customer') return <Navigate to="/my-tickets" replace />;
-    if (user.role === 'Agent') return <Navigate to ="/tickets" replace />;
     if (user.role === 'Admin') return <Navigate to="/dashboard" replace />;
+    if (user.role === 'Agent') return <Navigate to="/agent-dashboard" replace />;   
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -155,6 +158,13 @@ function App() {
               </ProtectedRoute>
             } />
             
+            {/* Agent routes */}
+            <Route path="/agent-dashboard" element={
+              <ProtectedRoute allowedRoles={['Agent']}>
+                <AgentDashboardPage />
+              </ProtectedRoute>
+            } />
+
             {/* accessible by ALL roles */}
             <Route
               path="/tickets/:id"
