@@ -37,6 +37,7 @@ import RegisterPage from './pages/auth/RegisterPage';
 import AdminDashboardPage from './pages/admin/DashboardPage';
 import TicketsPage from './pages/admin/TicketsPage';
 import UsersPage from './pages/admin/UsersPage';
+import CategoriesPage from './pages/admin/CategoriesPage';
 
 // Customer pages
 import MyTicketsPage from './pages/customer/MyTicketsPage';
@@ -125,6 +126,12 @@ function App() {
           <Route path="/tickets" element={
             <ProtectedRoute allowedRoles={['Admin', 'Agent']}>
               <TicketsPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/categories" element={
+            <ProtectedRoute allowedRoles={['Admin']}>
+              <CategoriesPage />  
             </ProtectedRoute>
           } />
 

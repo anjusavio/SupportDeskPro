@@ -34,6 +34,7 @@ import {
   ChevronDown,
   Menu,
   X,
+  Tag,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import axiosClient from '../../api/axiosClient';
@@ -71,7 +72,7 @@ const Navbar: React.FC = () => {
     const unreadCount = unreadData?.count ?? 0;
 
   /**
-   * logout — clears Zustand store and redirects to login.
+   * logout — clears Zustand store(global state) and redirects to login.
    * Zustand logout() clears localStorage token automatically.
    */
   const handleLogout = () => {
@@ -125,6 +126,13 @@ const Navbar: React.FC = () => {
                 <Link to="/dashboard" className={navLinkClass('/dashboard')}>
                   <LayoutDashboard size={16} />
                   Dashboard
+                </Link>
+              )}
+
+              {user?.role === 'Admin' && (
+                <Link to="/categories" className={navLinkClass('/categories')}>
+                  <Tag size={16} />
+                  Categories
                 </Link>
               )}
 
