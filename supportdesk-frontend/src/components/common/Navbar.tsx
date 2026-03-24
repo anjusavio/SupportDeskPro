@@ -36,7 +36,7 @@ import {
   X,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
-import { getUnreadCountApi } from '../../api/notificationApi';
+import axiosClient from '../../api/axiosClient';
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -59,14 +59,16 @@ const Navbar: React.FC = () => {
    * Replaces: useState + useEffect + fetch + loading/error handling
    * React Query handles all of that automatically
    */
-  const { data: notificationData } = useQuery({
-    queryKey: ['unreadCount'],
-    queryFn: getUnreadCountApi,
-    refetchInterval: 30000, // poll every 30 seconds
-    enabled: !!user,        // only run if user exists
-  });
-
-  const unreadCount = notificationData?.data?.count ?? 0;
+    const { data: unreadData } = useQuery({
+      queryKey: ['unread-count'],
+      queryFn: () =>
+        axiosClient
+          .get('/notifications/unread-count')
+          .then((r: any) => r.data.data ?? { count: 0 }),
+      refetchInterval: 30_000,
+      enabled: !!user,
+    });
+    const unreadCount = unreadData?.count ?? 0;
 
   /**
    * logout — clears Zustand store and redirects to login.

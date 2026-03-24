@@ -65,8 +65,13 @@ const CreateTicketPage: React.FC = () => {
   // Fetch active categories for dropdown
   const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
     queryKey: ['activeCategories'],
-    queryFn: getActiveCategoriesApi,
+    queryFn: () => {
+      console.log('Fetching categories...'); 
+      return getActiveCategoriesApi();
+    },
   });
+
+  console.log('Categories data:', categoriesData);
 
   const categories = categoriesData?.data ?? [];
 

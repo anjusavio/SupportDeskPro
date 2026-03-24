@@ -42,6 +42,9 @@ import UsersPage from './pages/admin/UsersPage';
 import MyTicketsPage from './pages/customer/MyTicketsPage';
 import CreateTicketPage from './pages/customer/CreateTicketPage';
 
+//shared
+import NotificationsPage from './pages/shared/NotificationsPage';
+
 /**
  * QueryClient — React Query configuration.
  * staleTime: how long cached data is considered fresh (5 mins)
@@ -154,6 +157,13 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
+            {/* // Route — all roles can access */}
+            <Route path="/notifications" element={
+              <ProtectedRoute allowedRoles={['Customer', 'Agent', 'Admin', 'SuperAdmin']}>
+                <NotificationsPage />
+              </ProtectedRoute>
+            } />
 
           {/* Default redirect */}
           <Route path="/" element={<Navigate to="/login" replace />} />
