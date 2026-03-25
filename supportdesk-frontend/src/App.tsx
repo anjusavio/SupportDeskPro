@@ -38,6 +38,7 @@ import AdminDashboardPage from './pages/admin/DashboardPage';
 import TicketsPage from './pages/admin/TicketsPage';
 import UsersPage from './pages/admin/UsersPage';
 import CategoriesPage from './pages/admin/CategoriesPage';
+import SLAPoliciesPage from './pages/admin/SLAPoliciesPage';
 
 // Customer pages
 import MyTicketsPage from './pages/customer/MyTicketsPage';
@@ -138,6 +139,12 @@ function App() {
             </ProtectedRoute>
           } />
 
+          <Route path="/sla-policies" element={
+            <ProtectedRoute allowedRoles={['Admin']}>
+              <SLAPoliciesPage />  
+            </ProtectedRoute>
+          } />
+          
           {/* Customer routes */}
           <Route path="/my-tickets" element={
             <ProtectedRoute allowedRoles={['Customer']}>

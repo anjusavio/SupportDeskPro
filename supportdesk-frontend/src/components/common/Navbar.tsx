@@ -35,6 +35,7 @@ import {
   Menu,
   X,
   Tag,
+  Clock,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import axiosClient from '../../api/axiosClient';
@@ -160,6 +161,13 @@ const Navbar: React.FC = () => {
                 </Link>
               )}
 
+              {user?.role === 'Admin' && (
+              <Link to="/sla-policies" className={navLinkClass('/sla-policies')}>
+                <Clock size={16} />
+                SLA Policies
+              </Link>
+            )}
+            
               {/* Customer only */}
               {user?.role === 'Customer' && (
                 <Link
@@ -307,6 +315,14 @@ const Navbar: React.FC = () => {
                 Users
               </Link>
             )}
+
+            {user?.role === 'Admin' && (
+            <Link to="/sla-policies" className={navLinkClass('/sla-policies')}>
+              <Clock size={16} />
+              SLA Policies
+            </Link>
+          )}
+
             {user?.role === 'Customer' && (
               <Link
                 to="/my-tickets"
