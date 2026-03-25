@@ -19,6 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Ticket, AlertCircle, Clock, CheckCircle, XCircle } from 'lucide-react';
 import Layout from '../../components/common/Layout';
 import { getMyTicketsApi } from '../../api/ticketApi';
+import { useSearchParams } from 'react-router-dom';
 
 /**
  * Status badge colors — maps status to Tailwind classes.
@@ -64,13 +65,12 @@ const priorityConfig: Record<string, string> = {
   Critical: 'bg-red-100 text-red-600',
 };
 
-const MyTicketsPage: React.FC = () => {
-  const navigate = useNavigate();
-
-  // Filter state — changing these triggers new API call
-  const [statusFilter, setStatusFilter] = useState('');
-  const [page, setPage] = useState(1);
-
+ /**
+ * CONCEPT: Status string → int map
+ * Filter tabs show string labels ("Open", "Resolved")
+ * API expects int values (1, 4).
+ * This map converts between them 
+ */
 //Ticket status
 const statusMap: Record<string, number> = {
     Open: 1,
@@ -79,7 +79,38 @@ const statusMap: Record<string, number> = {
     Resolved: 4,
     Closed: 5    
     };
+    
+      /**
+   * Reverse map — int → string
+   * Used to initialize filter tab from URL param ?status=4 → "Resolved" 
+   */
+  const statusReverseMap: Record<number, string> = {
+    1: 'Open',
+    2: 'InProgress',
+    3: 'OnHold',
+    4: 'Resolved',
+    5: 'Closed',
+  };
 
+const MyTicketsPage: React.FC = () => {
+  const navigate = useNavigate();
+
+  /**
+   * CONCEPT: useSearchParams reads URL query params.
+   * /my-tickets?status=4 → searchParams.get('status') = "4"
+   * Convert to int → look up string in reverseMap → "Resolved"
+   * Initialize filter tab to "Resolved" automatically 
+   */
+  const [searchParams] = useSearchParams();
+  const initialStatus = searchParams.get('status')
+    ? statusReverseMap[Number(searchParams.get('status'))] ?? ''
+    : '';
+
+  // Filter state — changing these triggers new API call
+  const [statusFilter, setStatusFilter] = useState<string>(initialStatus);
+  const [page, setPage] = useState(1);
+
+ 
   /**
    * useQuery fetches tickets with current filters.
    * queryKey array includes filters — when filters change,
@@ -97,7 +128,7 @@ const statusMap: Record<string, number> = {
   const tickets = data?.data?.items ?? [];
   const totalPages = data?.data?.totalPages ?? 1;
   const totalCount = data?.data?.totalCount ?? 0;
-
+ 
   // Format date to readable string
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('en-US', {

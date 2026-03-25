@@ -167,8 +167,15 @@ const Navbar: React.FC = () => {
                 SLA Policies
               </Link>
             )}
-            
+
               {/* Customer only */}
+              {user?.role === 'Customer' && (
+                <Link to="/customer-dashboard" className={navLinkClass('/customer-dashboard')}>
+                  <LayoutDashboard size={16} />
+                  Dashboard
+                </Link>
+              )}
+
               {user?.role === 'Customer' && (
                 <Link
                   to="/my-tickets"
@@ -323,6 +330,13 @@ const Navbar: React.FC = () => {
             </Link>
           )}
 
+             {user?.role === 'Customer' && (
+                <Link to="/customer-dashboard" className={navLinkClass('/customer-dashboard')}>
+                  <LayoutDashboard size={16} />
+                  Dashboard
+                </Link>
+              )}
+              
             {user?.role === 'Customer' && (
               <Link
                 to="/my-tickets"

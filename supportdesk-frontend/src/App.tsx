@@ -43,6 +43,7 @@ import SLAPoliciesPage from './pages/admin/SLAPoliciesPage';
 // Customer pages
 import MyTicketsPage from './pages/customer/MyTicketsPage';
 import CreateTicketPage from './pages/customer/CreateTicketPage';
+import CustomerDashboardPage from './pages/customer/CustomerDashboardPage';
 
 //AgentPages
 import AgentDashboardPage from './pages/agent/AgentDashboardPage';
@@ -144,8 +145,14 @@ function App() {
               <SLAPoliciesPage />  
             </ProtectedRoute>
           } />
-          
+
           {/* Customer routes */}
+          <Route path="/customer-dashboard" element={
+            <ProtectedRoute allowedRoles={['Customer']}>
+              <CustomerDashboardPage />
+            </ProtectedRoute>
+          } />
+
           <Route path="/my-tickets" element={
             <ProtectedRoute allowedRoles={['Customer']}>
               <MyTicketsPage />
