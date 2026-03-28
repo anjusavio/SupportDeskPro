@@ -1,7 +1,10 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using SupportDeskPro.Application.Features.Auth.ForgotPassword;
 using SupportDeskPro.Application.Features.Auth.Login;
 using SupportDeskPro.Application.Features.Auth.Register;
+using SupportDeskPro.Application.Features.Auth.ResetPassword;
+using SupportDeskPro.Application.Features.Auth.VerifyEmail;
 using SupportDeskPro.Contracts.Auth;
 using SupportDeskPro.Contracts.Common;
 
@@ -95,5 +98,50 @@ public class AuthController : ControllerBase
             Role = role,
             TenantName = tenantName
         }));
+    }
+
+    /// <summary>
+    /// Verifies user email using token from verification email.
+    /// Token hashed and matched against PasswordResetTokens table.
+    /// Marks user IsEmailVerified = true on success.
+    /// Token deleted after use — cannot be reused.
+    /// Returns 400 if token is invalid or expired.
+    /// </summary>
+    // POST /api/auth/verify-email
+    [HttpPost("verify-email")]
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request)
+    {
+        var result = await _mediator.Send(new VerifyEmailCommand(request.Token));
+        return Ok(ApiResponse<string>.Ok(result.Message));
+    }
+
+    /// <summary>
+    /// Sends password reset email with secure token link.
+    /// Always returns success even if email not found — prevents user enumeration.
+    /// Token expires in 1 hour.
+    /// </summary>
+    // POST /api/auth/forgot-password
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        var result = await _mediator.Send(new ForgotPasswordCommand(request.Email));
+        return Ok(ApiResponse<string>.Ok(result.Message));
+    }
+
+    /// <summary>
+    /// Resets password using token from forgot-password email.
+    /// Token validated and deleted after use — cannot be reused.
+    /// Returns 400 if token is invalid or expired.
+    /// </summary>
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(
+        [FromBody] ResetPasswordRequest request)
+    {
+        var result = await _mediator.Send(
+            new ResetPasswordCommand(
+                request.Token,
+                request.NewPassword,
+                request.ConfirmPassword));
+        return Ok(ApiResponse<string>.Ok(result.Message));
     }
 }
