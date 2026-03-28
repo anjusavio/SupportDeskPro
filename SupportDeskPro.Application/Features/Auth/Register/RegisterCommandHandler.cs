@@ -76,8 +76,10 @@ namespace SupportDeskPro.Application.Features.Auth.Register
 
             // 6. Generate email verification token
             var verificationToken = Convert.ToBase64String(
-                System.Security.Cryptography.RandomNumberGenerator
-                    .GetBytes(32));
+            System.Security.Cryptography.RandomNumberGenerator.GetBytes(32))
+            .Replace("+", "-")
+            .Replace("/", "_")
+            .Replace("=", "");
 
             var resetToken = new PasswordResetToken
             {

@@ -19,10 +19,12 @@ public class CreateCommentCommandHandler
     : IRequestHandler<CreateCommentCommand, CreateCommentResult>
 {
     private readonly IApplicationDbContext _db;
+    private readonly IEmailService _emailService;
 
-    public CreateCommentCommandHandler(IApplicationDbContext db)
+    public CreateCommentCommandHandler(IApplicationDbContext db,IEmailService emailService)
     {
         _db = db;
+        _emailService = emailService;
     }
 
     public async Task<CreateCommentResult> Handle(
@@ -73,6 +75,49 @@ public class CreateCommentCommandHandler
         _db.TicketComments.Add(comment);
         await _db.SaveChangesAsync(cancellationToken);
 
+
+        //// Reload navigation properties 
+        //await _db.Entry(ticket)
+        //    .Reference(t => t.CreatedBy)
+        //    .LoadAsync(cancellationToken);
+
+        //await _db.Entry(ticket)
+        //    .Reference(t => t.AssignedAgent)
+        //    .LoadAsync(cancellationToken);
+
+
+        // ─────────────────────────────────────────────
+        // EMAIL NOTIFICATIONS
+        // ─────────────────────────────────────────────
+
+        // Agent replied → notify customer
+        if (isAgentOrAdmin && !request.IsInternal)
+        {
+            await _emailService.SendNewReplyToCustomerAsync(
+                customerEmail: ticket.Customer.Email,
+                customerName: ticket.Customer.FirstName,
+                ticketNumber: ticket.TicketNumber,
+                ticketTitle: ticket.Title,
+                agentName: $"{ticket.AssignedAgent.FirstName} {ticket.AssignedAgent.LastName}",
+                replyPreview: request.Body
+            );
+        }
+
+        // Customer replied → notify agent
+        if (request.AuthorRole == UserRole.Customer.ToString())
+        {
+            if (ticket.AssignedAgent != null)
+            {
+                await _emailService.SendNewReplyToAgentAsync(
+                    agentEmail: ticket.AssignedAgent.Email,
+                    agentName: ticket.AssignedAgent.FirstName,
+                    ticketNumber: ticket.TicketNumber,
+                    ticketTitle: ticket.Title,
+                    customerName: $"{ticket.Customer.FirstName} {ticket.Customer.LastName}",
+                    replyPreview: request.Body
+                );
+            }
+        }
         return new CreateCommentResult(true, "Comment posted successfully.", comment.Id);
     }
 }

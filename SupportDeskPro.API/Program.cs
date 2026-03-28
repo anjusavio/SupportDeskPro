@@ -9,7 +9,10 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using SupportDeskPro.API.Middleware;
 using SupportDeskPro.Application;
+using SupportDeskPro.Application.Interfaces;
 using SupportDeskPro.Infrastructure;
+using SupportDeskPro.Infrastructure.Services;
+using SupportDeskPro.Infrastructure.Settings;
 
 // ── SERILOG BOOTSTRAP LOGGER ─────────────────────────────────
 // Bootstrap logger captures startup errors before full config loads
@@ -83,6 +86,8 @@ try
             { securityScheme, Array.Empty<string>() }
         });
     });
+    builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection("EmailSettings"));
 
     // Makes ALL .NET responses camelCase automatically
     builder.Services.AddControllers()
@@ -106,7 +111,7 @@ try
 
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
-
+    builder.Services.AddScoped<IEmailService, EmailService>();
     // ── BUILD ─────────────────────────────────────────────────
     var app = builder.Build();
 
