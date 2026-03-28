@@ -39,11 +39,15 @@ import {
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import axiosClient from '../../api/axiosClient';
+//— clear ALL cached queries on logout 
+// to prevent showing old data if user logs out and another logs in on same browser
+import { useQueryClient } from '@tanstack/react-query'; 
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuthStore();
+  const queryClient = useQueryClient();
 
   // Local state for mobile menu and user dropdown
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -77,7 +81,8 @@ const Navbar: React.FC = () => {
    * Zustand logout() clears localStorage token automatically.
    */
   const handleLogout = () => {
-    logout();
+    logout();              // clears Zustand + localStorage
+    queryClient.clear();   // clears ALL React Query cache
     navigate('/login');
   };
 

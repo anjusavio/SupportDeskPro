@@ -26,6 +26,9 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { loginApi } from '../../api/authApi';
 import useAuthStore from '../../store/authStore';
+// useQueryClient for clearing cache on logout 
+import { useQueryClient } from '@tanstack/react-query';
+
 
 /**
  * Zod validation schema for login form.
@@ -49,6 +52,8 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { setAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
+
 
   /**
    * useForm — initializes form with Zod validation.
@@ -74,6 +79,11 @@ const LoginPage: React.FC = () => {
       const response = await loginApi(data);
 
       if (response.success && response.data) {
+
+        //Clear cache BEFORE setting new user and token,
+        // to prevent old user data from showing after logout/login on same browser
+         queryClient.clear();
+
         // Save token and user to Zustand store + localStorage
         setAuth(response.data.user, response.data.accessToken);
 
