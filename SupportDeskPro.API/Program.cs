@@ -115,11 +115,12 @@ try
     // ── BUILD ─────────────────────────────────────────────────
     var app = builder.Build();
 
-    if (app.Environment.IsDevelopment())
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
     {
-        app.UseSwagger();
-        app.UseSwaggerUI();
-    }
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "SupportDesk Pro API v1");
+        c.RoutePrefix = "swagger";
+    });
 
     // ── MIDDLEWARE PIPELINE ORDER IS CRITICAL ─────────────────
     app.UseMiddleware<ExceptionMiddleware>(); // ← FIRST — catches all

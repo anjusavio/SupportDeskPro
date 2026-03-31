@@ -31,7 +31,7 @@ namespace SupportDeskPro.Application.Features.Auth.Register
             if (request.Password != request.ConfirmPassword)
                 return new RegisterResult(false, "Passwords do not match.");
 
-            // 2. Find tenant by slug ← ADD HERE
+            // 2. Find tenant by slug 
             var tenant = await _db.Tenants
                 .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(
