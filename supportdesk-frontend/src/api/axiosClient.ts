@@ -18,7 +18,9 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const axiosClient = axios.create({
-  baseURL: 'https://localhost:7230/api', // .NET API URL
+  // Production: reads REACT_APP_API_URL from Azure Static Web Apps configuration
+  // Development: reads REACT_APP_API_URL from .env.local → http://localhost:7230/api
+ baseURL: process.env.REACT_APP_API_URL || 'http://localhost:7230/api', // .NET API URL
   headers: {
     'Content-Type': 'application/json',
   },
