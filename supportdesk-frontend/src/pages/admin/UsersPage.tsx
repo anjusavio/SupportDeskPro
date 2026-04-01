@@ -33,7 +33,7 @@ import { z } from 'zod';
 import toast from 'react-hot-toast';
 import {
   Search, UserPlus, RefreshCw, CheckCircle2,
-  XCircle, Mail, Shield, User, X, Send,
+  XCircle, Mail,  User, X, Send,
 } from 'lucide-react';
 import Layout from '../../components/common/Layout';
 import axiosClient from '../../api/axiosClient';

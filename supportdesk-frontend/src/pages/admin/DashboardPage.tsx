@@ -30,7 +30,7 @@ import {
 } from 'recharts';
 import {
   Ticket, CheckCircle2, AlertTriangle,
-  Clock, RefreshCw, Plus, Search,
+   RefreshCw,  Search,
   Circle, Activity, PauseCircle, XCircle,
 } from 'lucide-react';
 import Layout from '../../components/common/Layout';
@@ -76,17 +76,6 @@ interface AdminDashboardResponse {
   ticketsByPriority: PriorityTicketCount[];
 }
 
-// CONFIG MAPS
-
-const STATUS_CONFIG: Record<string, {
-  label: string; color: string; icon: React.ElementType;
-}> = {
-  Open:       { label: 'Open',        color: 'bg-blue-100 text-blue-700',     icon: Circle },
-  InProgress: { label: 'In Progress', color: 'bg-yellow-100 text-yellow-700', icon: Activity },
-  OnHold:     { label: 'On Hold',     color: 'bg-orange-100 text-orange-700', icon: PauseCircle },
-  Resolved:   { label: 'Resolved',    color: 'bg-green-100 text-green-700',   icon: CheckCircle2 },
-  Closed:     { label: 'Closed',      color: 'bg-gray-100 text-gray-600',     icon: XCircle },
-};
 
 const PRIORITY_CONFIG: Record<string, { label: string; dotColor: string }> = {
   Low:      { label: 'Low',      dotColor: 'bg-gray-400' },

@@ -51,7 +51,7 @@ const VerifyEmailPage: React.FC = () => {
           'Verification failed. The link may have expired.'
         );
       });
-  }, [token]); // runs once when token is available 
+  }, [token, navigate]); // runs once when token is available 
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">

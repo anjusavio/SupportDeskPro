@@ -214,27 +214,6 @@ const TicketsPage: React.FC = () => {
   });
   const categories: CategoryOption[] = categoriesData ?? [];
 
-  // ─── Mutation: PATCH /tickets/{id}/status ────────────────────────
-  const statusMutation = useMutation({
-    mutationFn: ({ ticketId, status }: { ticketId: string; status: string }) =>
-      axiosClient.patch(`/tickets/${ticketId}/status`, { status }),
-    onSuccess: () => {
-      toast.success('Status updated');
-      queryClient.invalidateQueries({ queryKey: ['tickets'] });
-    },
-    onError: () => toast.error('Failed to update status'),
-  });
-
-  // ─── Mutation: PATCH /tickets/{id}/assign (Admin only) ───────────
-  const assignMutation = useMutation({
-    mutationFn: ({ ticketId, agentId }: { ticketId: string; agentId: string | null }) =>
-      axiosClient.patch(`/tickets/${ticketId}/assign`, { agentId }),
-    onSuccess: () => {
-      toast.success('Ticket assigned');
-      queryClient.invalidateQueries({ queryKey: ['tickets'] });
-    },
-    onError: () => toast.error('Failed to assign ticket'),
-  });
 
   // ─── Derived values ──────────────────────────────────────────────
   const tickets    = ticketsData?.items      ?? [];

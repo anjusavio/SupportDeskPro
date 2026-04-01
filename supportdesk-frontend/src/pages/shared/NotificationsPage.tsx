@@ -30,7 +30,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
   Bell, BellOff, CheckCheck, RefreshCw,
-  Ticket, Circle, ExternalLink,
+  Ticket, ExternalLink,
 } from 'lucide-react';
 import Layout from '../../components/common/Layout';
 import axiosClient from '../../api/axiosClient';
