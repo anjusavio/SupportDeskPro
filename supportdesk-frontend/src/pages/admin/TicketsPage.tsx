@@ -30,8 +30,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
+import { useQuery,  useQueryClient } from '@tanstack/react-query';
 import {
   Search, Filter, ChevronLeft, ChevronRight,
   AlertTriangle, Circle, Activity, PauseCircle,
@@ -139,7 +138,6 @@ function PriorityBadge({ priority }: { priority: string }) {
 
 const TicketsPage: React.FC = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'Admin';
 

@@ -30,8 +30,7 @@ import {
 } from 'recharts';
 import {
   Ticket, CheckCircle2, AlertTriangle,
-   RefreshCw,  Search,
-  Circle, Activity, PauseCircle, XCircle,
+   RefreshCw,  Search, Activity, 
 } from 'lucide-react';
 import Layout from '../../components/common/Layout';
 import axiosClient from '../../api/axiosClient';
