@@ -30,7 +30,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useQuery,  useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   Search, Filter, ChevronLeft, ChevronRight,
   AlertTriangle, Circle, Activity, PauseCircle,
