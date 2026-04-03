@@ -35,6 +35,7 @@ import RegisterPage from './pages/auth/RegisterPage';
 import VerifyEmailPage from './pages/auth/VerifyEmailPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
+import ChangePasswordPage from './pages/auth/ChangePasswordPage';
 
 // Admin pages
 import AdminDashboardPage from './pages/admin/DashboardPage';
@@ -121,6 +122,7 @@ function App() {
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password"  element={<ResetPasswordPage />} />
+          <Route path="/change-password" element={<ChangePasswordPage />} />
 
           {/* Admin routes */}
           <Route path="/dashboard" element={
