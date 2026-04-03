@@ -1,5 +1,7 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SupportDeskPro.Application.Features.Auth.ChangePassword;
 using SupportDeskPro.Application.Features.Auth.ForgotPassword;
 using SupportDeskPro.Application.Features.Auth.Login;
 using SupportDeskPro.Application.Features.Auth.Register;
@@ -7,6 +9,7 @@ using SupportDeskPro.Application.Features.Auth.ResetPassword;
 using SupportDeskPro.Application.Features.Auth.VerifyEmail;
 using SupportDeskPro.Contracts.Auth;
 using SupportDeskPro.Contracts.Common;
+using SupportDeskPro.Domain.Entities;
 
 namespace SupportDeskPro.API.Controllers;
 
@@ -142,6 +145,34 @@ public class AuthController : ControllerBase
                 request.Token,
                 request.NewPassword,
                 request.ConfirmPassword));
+        return Ok(ApiResponse<string>.Ok(result.Message));
+    }
+
+
+    /// <summary>
+    /// Changes password for the currently authenticated user.
+    /// Requires current password verification.
+    /// Invalidates all refresh tokens after change.
+    /// </summary>
+    [HttpPost("change-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword(
+        [FromBody] ChangePasswordRequest request)
+    {
+        // Get UserId from JWT claims
+        var userIdClaim = User.FindFirst(
+            System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if (!Guid.TryParse(userIdClaim, out var userId))
+            return Unauthorized();
+
+        var result = await _mediator.Send(
+            new ChangePasswordCommand(
+                userId,
+                request.CurrentPassword,
+                request.NewPassword,
+                request.ConfirmPassword));
+
         return Ok(ApiResponse<string>.Ok(result.Message));
     }
 }
