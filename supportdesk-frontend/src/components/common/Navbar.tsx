@@ -36,6 +36,7 @@ import {
   X,
   Tag,
   Clock,
+  Lock
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import axiosClient from '../../api/axiosClient';
@@ -257,6 +258,18 @@ const Navbar: React.FC = () => {
                     <p className="text-xs text-gray-500">{user?.email}</p>
                   </div>
 
+                  {/* Change Password */}
+                  <Link
+                    to="/change-password"
+                    onClick={() => setIsUserDropdownOpen(false)}
+                    className="w-full flex items-center gap-2 px-4 py-2
+                               text-sm text-gray-700 hover:bg-gray-50
+                               transition-colors"
+                  >
+                    <Lock size={16} />
+                    Change Password
+                  </Link>
+                  
                   {/* Logout button */}
                   <button
                     onClick={handleLogout}
