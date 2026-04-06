@@ -6,5 +6,6 @@
         string? TenantName { get; }
         bool IsSuperAdmin { get; }
         Guid? CurrentUserId { get; }
+        string? CurrentUserRole { get; }
     }
 }

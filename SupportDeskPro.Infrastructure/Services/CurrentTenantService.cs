@@ -7,7 +7,7 @@ namespace SupportDeskPro.Infrastructure.Services;
 public class CurrentTenantService : ICurrentTenantService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
-
+    public string? CurrentUserRole =>User?.FindFirst(ClaimTypes.Role)?.Value;
     public CurrentTenantService(IHttpContextAccessor httpContextAccessor)
     {
         _httpContextAccessor = httpContextAccessor;

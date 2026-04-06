@@ -16,10 +16,12 @@ public class GetTicketsQueryHandler
     : IRequestHandler<GetTicketsQuery, PagedResult<TicketResponse>>
 {
     private readonly IApplicationDbContext _db;
+    private readonly ICurrentTenantService _currentTenant;
 
-    public GetTicketsQueryHandler(IApplicationDbContext db)
+    public GetTicketsQueryHandler(IApplicationDbContext db, ICurrentTenantService currentTenant)
     {
         _db = db;
+        _currentTenant = currentTenant;
     }
 
     public async Task<PagedResult<TicketResponse>> Handle(
@@ -32,6 +34,13 @@ public class GetTicketsQueryHandler
             .Include(t => t.AssignedAgent)
             .Where(t => !t.IsDeleted)
             .AsQueryable();
+
+        // Agent sees only their assigned tickets
+        if (_currentTenant.CurrentUserRole == "Agent")
+        {
+            query = query.Where(t =>
+                t.AssignedAgentId == _currentTenant.CurrentUserId);
+        }
 
         // Apply filters
         if (request.Status.HasValue)
