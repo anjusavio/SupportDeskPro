@@ -74,5 +74,5 @@ export const changeTicketStatus = (
 
 export const getStatusHistory = (ticketId: number | string) =>
   axiosClient
-    .get(`/tickets/${ticketId}/status-history`)
+    .get(`/tickets/${ticketId}/history`)
     .then((r) => r.data.data);
