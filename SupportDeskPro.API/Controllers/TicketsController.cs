@@ -211,7 +211,7 @@ public class TicketsController : ControllerBase
     /// </summary>
     // GET /api/tickets/{id}/history (Admin and Agent)
     [HttpGet("{id}/history")]
-    [Authorize(Roles = "Admin,Agent")]
+    [Authorize(Roles = "Admin,Agent,Customer")]
     public async Task<IActionResult> GetHistory(Guid id)
     {
         var result = await _mediator.Send(new GetTicketHistoryQuery(id));
