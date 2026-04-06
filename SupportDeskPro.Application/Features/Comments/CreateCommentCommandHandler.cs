@@ -8,6 +8,7 @@
 /// </summary>
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using SupportDeskPro.Application.Interfaces;
 using SupportDeskPro.Domain.Entities;
 using SupportDeskPro.Domain.Enums;
@@ -20,11 +21,13 @@ public class CreateCommentCommandHandler
 {
     private readonly IApplicationDbContext _db;
     private readonly IEmailService _emailService;
+    private readonly ILogger<CreateCommentCommandHandler> _logger;
 
-    public CreateCommentCommandHandler(IApplicationDbContext db,IEmailService emailService)
+    public CreateCommentCommandHandler(IApplicationDbContext db,IEmailService emailService, ILogger<CreateCommentCommandHandler> logger)
     {
         _db = db;
         _emailService = emailService;
+        _logger = logger;
     }
 
     public async Task<CreateCommentResult> Handle(
@@ -33,6 +36,8 @@ public class CreateCommentCommandHandler
     {
         // 1. Find ticket
         var ticket = await _db.Tickets
+            .Include(t => t.Customer)      // Customer
+            .Include(t => t.AssignedAgent)  // Agent
             .FirstOrDefaultAsync(
                 t => t.Id == request.TicketId && !t.IsDeleted,
                 cancellationToken)
@@ -93,14 +98,24 @@ public class CreateCommentCommandHandler
         // Agent replied → notify customer
         if (isAgentOrAdmin && !request.IsInternal)
         {
-            await _emailService.SendNewReplyToCustomerAsync(
-                customerEmail: ticket.Customer.Email,
+            try
+            {
+                await _emailService.SendNewReplyToCustomerAsync(
+                customerEmail: ticket.Customer.Email,      
                 customerName: ticket.Customer.FirstName,
                 ticketNumber: ticket.TicketNumber,
                 ticketTitle: ticket.Title,
                 agentName: $"{ticket.AssignedAgent.FirstName} {ticket.AssignedAgent.LastName}",
                 replyPreview: request.Body
-            );
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                   "Failed to send reply email to customer {CustomerEmail} for ticket #{TicketNumber}",
+                   ticket.Customer.Email,
+                   ticket.TicketNumber);
+            }
         }
 
         // Customer replied → notify agent
@@ -108,14 +123,24 @@ public class CreateCommentCommandHandler
         {
             if (ticket.AssignedAgent != null)
             {
-                await _emailService.SendNewReplyToAgentAsync(
+                try
+                {
+                    await _emailService.SendNewReplyToAgentAsync(
                     agentEmail: ticket.AssignedAgent.Email,
                     agentName: ticket.AssignedAgent.FirstName,
                     ticketNumber: ticket.TicketNumber,
                     ticketTitle: ticket.Title,
                     customerName: $"{ticket.Customer.FirstName} {ticket.Customer.LastName}",
                     replyPreview: request.Body
-                );
+                    );
+                }
+                catch (Exception ex) 
+                {
+                    _logger.LogError(ex,
+                      "Failed to send reply email to agent {AgentEmail} for ticket #{TicketNumber}",
+                      ticket.AssignedAgent.Email,
+                      ticket.TicketNumber);
+                }
             }
         }
         return new CreateCommentResult(true, "Comment posted successfully.", comment.Id);
