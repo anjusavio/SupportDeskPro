@@ -28,9 +28,9 @@ public class UpdateTicketStatusCommandHandler
         CancellationToken cancellationToken)
     {
         // 1. Validate status range
-        if (request.Status < 1 || request.Status > 4)
+        if (request.Status < 1 || request.Status > 5)
             throw new BusinessValidationException(
-                "Status must be 1=Open, 2=InProgress, 3=Resolved, 4=Closed.");
+                "Status must be 1=Open, 2=InProgress, 3=OnHold, 4=Resolved, 5=Closed.");
 
         // 2. Find ticket
         var ticket = await _db.Tickets

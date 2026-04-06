@@ -158,11 +158,11 @@ const PRIORITY_CONFIG: Record<string, { label: string; color: string }> = {
  * Open=1, InProgress=2, OnHold=3, Resolved=4, Closed=5
  */
 const ALLOWED_TRANSITIONS: Record<string, number[]> = {
-  Open:       [2, 3, 5],
-  InProgress: [3, 4, 5],
-  OnHold:     [2, 5],
-  Resolved:   [5, 1],
-  Closed:     [],
+  Open:       [2, 3, 5],    // Open -> InProgress, OnHold, Closed
+  InProgress: [3, 4, 5],    // InProgress -> OnHold, Resolved, Closed
+  OnHold:     [2, 5],       // OnHold -> InProgress, Closed
+  Resolved:   [5, 1],       // Resolved -> Closed, Open (reopen)
+  Closed:     [],           // Closed -> nothing
 };
 
 const STATUS_NUMBER_MAP: Record<number, { label: string; icon: React.ElementType }> = {
