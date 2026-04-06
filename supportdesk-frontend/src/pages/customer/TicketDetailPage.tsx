@@ -536,7 +536,7 @@ const TicketDetailPage: React.FC = () => {
     queryKey: ['ticket-history', id],
     queryFn: () =>
       axiosClient
-        .get<ApiResponse<StatusHistory[]>>(`/tickets/${id}/status-history`)
+        .get<ApiResponse<StatusHistory[]>>(`/tickets/${id}/history`)
         .then((r) => r.data.data ?? []),
     enabled: !!ticket,
   });
