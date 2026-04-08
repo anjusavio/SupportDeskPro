@@ -238,14 +238,14 @@ The ticket conversation thread supports two types of messages. Public replies ar
 
 ### **Email Notifications**
 Nine HTML email templates sent via MailKit over SMTP. Every template uses a consistent layout with the SupportDesk Pro header and a clear call-to-action button:
-•	Email verification on registration
-•	Password reset with secure expiring token
-•	Ticket creation confirmation to customer
-•	Ticket assignment notification to agent
-•	Reply notification — customer when agent replies publicly, agent when customer replies
-•	Status change notification to customer
-•	SLA breach alert to admin
-•	Agent invitation with temporary password
+-	Email verification on registration
+-	Password reset with secure expiring token
+-	Ticket creation confirmation to customer
+-	Ticket assignment notification to agent
+-	Reply notification — customer when agent replies publicly, agent when customer replies
+-	Status change notification to customer
+-	SLA breach alert to admin
+-	Agent invitation with temporary password
 All email links use FrontendUrl from environment variables — localhost in development, the live Azure URL in production. Email failures are caught and logged without failing the original request.
 
 ### **Notifications**
@@ -265,20 +265,20 @@ The database has 18 tables:
 
 ```
 
-*Authentication & Identity*
+Authentication & Identity
 ├── Users                    -- All roles in one table (Customer, Agent, Admin)
 ├── RefreshTokens            -- JWT refresh token rotation
 └── PasswordResetTokens      -- Email verification and password reset tokens
 
-*Tenant Management*
+Tenant Management
 ├── Tenants                  -- Company workspaces, each with isolated data
 └── TenantSettings           -- Per-tenant configuration and preferences
 
-*Support Configuration*
+Support Configuration
 ├── Categories               -- Ticket categories with parent/child hierarchy
 └── SLAPolicies              -- Response and resolution time targets per priority
 
-*Tickets*
+Tickets
 ├── Tickets                  -- Core ticket with status, priority, SLA fields
 ├── TicketComments           -- Public replies and internal agent notes
 ├── TicketAttachments        -- File metadata (files stored in Blob Storage)
@@ -286,7 +286,7 @@ The database has 18 tables:
 ├── TicketAssignmentHistory  -- Audit trail of every agent assignment
 └── TicketNumberSequences    -- Per-tenant sequential ticket numbering (starts at 1001)
 
-*Activity & Monitoring*
+Activity & Monitoring
 ├── Notifications            -- In-app notifications with read tracking
 ├── EmailLogs                -- Record of every email sent by the system
 └── AuditLogs                -- System-wide audit trail
