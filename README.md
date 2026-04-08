@@ -253,9 +253,12 @@ The bell icon in the navbar polls the unread count every 30 seconds without requ
 
 ### **Role-Based Dashboards**
 Each role lands on a different dashboard after login, showing only what is relevant to them.
-The Admin dashboard shows tenant-wide ticket volume, agent workload comparison, category breakdown, SLA compliance metrics, and tickets by priority. Every summary card is clickable and navigates to a filtered ticket list.
-The Agent dashboard shows their personal queue — open tickets, SLA status across their assigned tickets, tickets resolved today, and average resolution time. It is focused entirely on what the agent needs to act on.
-The Customer dashboard shows a summary of their own tickets — total raised, open, resolved, and any SLA breaches. Quick action buttons let them raise a new ticket or jump straight to their ticket list. The Resolved card navigates directly to a filtered view showing only resolved tickets.
+
+The **Admin dashboard** shows tenant-wide ticket volume, agent workload comparison, category breakdown, SLA compliance metrics, and tickets by priority. Every summary card is clickable and navigates to a filtered ticket list.
+
+The **Agent dashboard** shows their personal queue — open tickets, SLA status across their assigned tickets, tickets resolved today, and average resolution time. It is focused entirely on what the agent needs to act on.
+
+The **Customer dashboard** shows a summary of their own tickets — total raised, open, resolved, and any SLA breaches. Quick action buttons let them raise a new ticket or jump straight to their ticket list. The Resolved card navigates directly to a filtered view showing only resolved tickets.
 
 ---
 
