@@ -309,32 +309,32 @@ Every main table has soft delete (IsDeleted, DeletedAt, DeletedBy) and audit fie
 
 1. ***Clone the repository***
 
-git clone https://github.com/anjusavio/SupportDeskPro.git
-cd SupportDeskPro
+        git clone https://github.com/anjusavio/SupportDeskPro.git
+        cd SupportDeskPro
 
 2. ***Update the connection string in appsettings.json***
 
-"ConnectionStrings": {
-  "DefaultConnection": "Server=localhost;Database=SupportDeskPro;Trusted_Connection=True;TrustServerCertificate=True;"
-},
-  "EmailSettings": {
-    "FrontendUrl": "http://localhost:3000"
-  }
+        "ConnectionStrings": {
+          "DefaultConnection": "Server=localhost;Database=SupportDeskPro;Trusted_Connection=True;TrustServerCertificate=True;"
+        },
+          "EmailSettings": {
+            "FrontendUrl": "http://localhost:3000"
+          }
 
-The base appsettings.json has SMTP and JWT configuration. Update the Gmail app password if you want emails to actually send locally.
+        The base appsettings.json has SMTP and JWT configuration. Update the Gmail app password if you want emails to actually send locally.
 
 
 3. ***Apply migrations from the API project***
 
-dotnet ef database update \
-  --project SupportDeskPro.Infrastructure \
-  --startup-project SupportDeskPro.API
+        dotnet ef database update \
+          --project SupportDeskPro.Infrastructure \
+          --startup-project SupportDeskPro.API
 
 4. ***Run the API***
 
-cd SupportDeskPro.API
-dotnet run
-The API starts at https://localhost:7230. Swagger UI is available at https://localhost:7230/swagger.
+        cd SupportDeskPro.API
+        dotnet run
+        The API starts at https://localhost:7230. Swagger UI is available at https://localhost:7230/swagger.
 
 ---
 
