@@ -366,3 +366,6 @@ FodyWeavers.xsd
 supportdesk-frontend/node_modules
 supportdesk-frontend/build/
 supportdesk-frontend/.env
+
+# Backend secrets
+appsettings.Development.json
