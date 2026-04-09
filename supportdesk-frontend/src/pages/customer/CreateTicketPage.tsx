@@ -17,6 +17,10 @@
  * 4. useMutation (React Query)
  *    For POST/PUT/DELETE — not useQuery (which is for GET).
  *    onSuccess → redirect to my-tickets 
+ * 
+ * 5. AI suggestion banner — shown after customer fills title + description.
+ *    Polls for suggestion after 1 second of typing pause (debounce).
+ *    Customer can accept or ignore ai suggestions
  */
 import React from 'react';
 import { useForm } from 'react-hook-form';
@@ -29,8 +33,13 @@ import { ArrowLeft, Send } from 'lucide-react';
 import Layout from '../../components/common/Layout';
 import { getActiveCategoriesApi } from '../../api/categoryApi';
 import { createTicketApi } from '../../api/ticketApi';
-// Add to imports
 import { useQueryClient } from '@tanstack/react-query';
+
+//For ai suggestion banner
+import { useState, useEffect } from 'react'; 
+import { Sparkles } from 'lucide-react';             
+import axiosClient from '../../api/axiosClient';       
+import { ApiResponse } from '../../types/api.types';  
 
 // Zod validation schema
 const createTicketSchema = z.object({
@@ -75,14 +84,6 @@ const CreateTicketPage: React.FC = () => {
 
   const categories = categoriesData?.data ?? [];
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<CreateTicketFormData>({
-    resolver: zodResolver(createTicketSchema),
-  });
-
   /**
    * useMutation — used for POST/PUT/DELETE operations.
    *
@@ -96,6 +97,55 @@ const CreateTicketPage: React.FC = () => {
 
   // Get QueryClient instance to invalidate queries after mutation
   const queryClient = useQueryClient();
+
+  // For AI suggestions state
+  interface AISuggestion {
+  suggestedCategory: string;
+  suggestedPriority: string;
+  confidence: number;
+  reasoning: string;
+  }
+  const [aiSuggestion, setAiSuggestion]       = useState<AISuggestion | null>(null);
+  const [showAISuggestion, setShowAISuggestion] = useState(false);
+  const [aiLoading, setAiLoading]             = useState(false);
+
+  // Watch title and description for debounced AI call
+ const { register, handleSubmit,  watch, setValue,formState: { errors }} =
+  useForm<CreateTicketFormData>({
+    resolver: zodResolver(createTicketSchema),
+  });
+
+const titleValue       = watch('title');
+const descriptionValue = watch('description');
+
+// Debounce — call AI after 1 second pause in typing
+useEffect(() => {
+  if (!titleValue || !descriptionValue) return;
+  if (titleValue.length < 10 || descriptionValue.length < 20) return;
+  console.log('AI effect triggered');
+
+  const timeout = setTimeout(async () => {
+    console.log('AI calling API...');
+    try {
+      setAiLoading(true);
+      const response = await axiosClient.post<ApiResponse<AISuggestion>>(
+        '/tickets/ai-suggest',
+        { title: titleValue, description: descriptionValue }
+      );
+      const data = response.data.data;
+      if (data && data.confidence > 0.6) {
+        setAiSuggestion(data);
+        setShowAISuggestion(true);
+      }
+    } catch {
+      // AI failure — silently ignore 
+    } finally {
+      setAiLoading(false);
+    }
+  }, 1000);
+
+  return () => clearTimeout(timeout);
+}, [titleValue, descriptionValue]);
 
   const mutation = useMutation({
     mutationFn: createTicketApi,
@@ -248,6 +298,82 @@ const CreateTicketPage: React.FC = () => {
                 </p>
               )}
             </div>
+            
+            {/* ── AI Suggestion Banner ── */}
+            {aiLoading && (
+              <div className="flex items-center gap-2 text-xs text-indigo-500
+                              bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
+                <div className="animate-spin rounded-full h-3 w-3
+                                border-b-2 border-indigo-500" />
+                AI is analysing your ticket...
+              </div>
+            )}
+
+            {showAISuggestion && aiSuggestion && !aiLoading && (
+              <div className="bg-indigo-50 border border-indigo-200
+                              rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Sparkles size={14} className="text-indigo-600" />
+                    <span className="text-sm font-semibold text-indigo-700">
+                      AI Suggestion
+                    </span>
+                    <span className="text-xs text-indigo-400 bg-indigo-100
+                                     px-2 py-0.5 rounded-full">
+                      {Math.round(aiSuggestion.confidence * 100)}% confident
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAISuggestion(false)}
+                    className="text-indigo-400 hover:text-indigo-600 text-xs"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+
+                <p className="text-xs text-indigo-500 italic mb-3">
+                  {aiSuggestion.reasoning}
+                </p>
+
+                <div className="flex items-center gap-4 flex-wrap">
+                  <span className="text-xs text-indigo-700">
+                    Category: <strong>{aiSuggestion.suggestedCategory}</strong>
+                  </span>
+                  <span className="text-xs text-indigo-700">
+                    Priority: <strong>{aiSuggestion.suggestedPriority}</strong>
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // Apply category
+                      const matched = categories.find(
+                        c => c.name === aiSuggestion.suggestedCategory
+                      );
+                      if (matched) setValue('categoryId', matched.id);
+
+                      // Apply priority
+                      const priorityMap: Record<string, string> = {
+                        Low: '1', Medium: '2', High: '3', Critical: '4'
+                      };
+                      const priorityValue =
+                        priorityMap[aiSuggestion.suggestedPriority];
+                      if (priorityValue) setValue('priority', priorityValue);
+
+                      setShowAISuggestion(false);
+                      toast.success('AI suggestion applied!');
+                    }}
+                    className="ml-auto px-3 py-1.5 text-xs font-medium
+                               bg-indigo-600 text-white rounded-lg
+                               hover:bg-indigo-700 transition-colors"
+                  >
+                    Apply Suggestion
+                  </button>
+                </div>
+              </div>
+            )}
+            {/* ── End AI Suggestion Banner ── */}
 
             {/* Buttons */}
             <div className="flex items-center justify-end gap-3 pt-2">
