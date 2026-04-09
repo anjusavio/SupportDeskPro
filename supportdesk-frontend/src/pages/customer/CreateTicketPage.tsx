@@ -133,6 +133,7 @@ useEffect(() => {
         { title: titleValue, description: descriptionValue }
       );
       const data = response.data.data;
+      //if confidence is above 60%, show suggestion
       if (data && data.confidence > 0.6) {
         setAiSuggestion(data);
         setShowAISuggestion(true);

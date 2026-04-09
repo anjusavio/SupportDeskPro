@@ -43,6 +43,13 @@
  * 8. Click-outside to close dropdown
  *    useRef + document.addEventListener('mousedown')
  *    Detects click outside the dropdown div and closes it 
+ * 
+ * 9. AI Draft Reply (bonus feature!)
+ *    Button triggers API call to generate AI draft based on ticket content.
+ *    While waiting, button shows loading state.
+ *    Once draft is received, it populates the textarea and shows a success toast.
+ *    If API call fails, shows error toast and allows manual typing.
+ *
  */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -57,6 +64,7 @@ import {
   CheckCircle2, Circle, PauseCircle, XCircle,
   Send, Paperclip, Lock, Unlock, ChevronDown,
   Download, Calendar, Activity, FileText, Image, File,
+  Sparkles,
 } from 'lucide-react';
 import Layout from '../../components/common/Layout';
 import axiosClient from '../../api/axiosClient';
@@ -172,6 +180,7 @@ const STATUS_NUMBER_MAP: Record<number, { label: string; icon: React.ElementType
   4: { label: 'Resolved',    icon: CheckCircle2 },
   5: { label: 'Closed',      icon: XCircle },
 };
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS — defined outside component
@@ -587,6 +596,35 @@ const TicketDetailPage: React.FC = () => {
     addCommentMutation.mutate(data);
   }
 
+
+  // ── AI Draft Reply state ─────────────────────────────────────────
+  // When user clicks "Get AI Draft", we call the API to generate a draft reply.
+  // While waiting for the response, we show a loading state on the button.
+  // Once the draft is received, we fill the textarea with the suggested reply and show a success toast.
+  // If the API call fails, we show an error toast and let the user type manually.
+const [aiDraftLoading, setAiDraftLoading] = useState(false);
+
+async function handleAIDraft() {
+  try {
+    setAiDraftLoading(true);
+    const response = await axiosClient.post<ApiResponse<{ draftReply: string }>>(
+      `/tickets/${id}/ai-draft-reply`,
+      { isInternal: isInternalValue } //True: only admin to agent or vice versa.  False: admin/agent to customer.
+    );
+    const draft = response.data.data?.draftReply;
+    if (draft) {
+      setValue('body', draft); //  fills the textarea 
+      toast.success(isInternalValue
+                    ? 'AI internal note drafted — review before sending'
+                    : 'AI reply drafted — review and edit before sending');
+    }
+  } catch {
+    toast.error('AI draft failed. Please type your reply manually.');
+  } finally {
+    setAiDraftLoading(false);
+  }
+}
+
   // ─── 10. File handlers ───────────────────────────────────────────────────
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
@@ -769,7 +807,10 @@ const TicketDetailPage: React.FC = () => {
                   {isAgentOrAdmin && (
                     <label className="flex items-center gap-2 cursor-pointer w-fit">
                       <div
-                        onClick={() => setValue('isInternal', !isInternalValue)}
+                        onClick={() => {
+                              setValue('isInternal', !isInternalValue);
+                              setValue('body', '');  // clear textarea on toggle 
+                            }}
                         className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${
                           isInternalValue ? 'bg-amber-400' : 'bg-gray-200'
                         }`}
@@ -835,6 +876,26 @@ const TicketDetailPage: React.FC = () => {
                     >
                       <Paperclip size={12} /> Attach files
                     </button>
+
+                     {/*  AI Draft button — only for Agent/Admin */}
+                      {isAgentOrAdmin && (
+                        <button
+                          type="button"
+                          onClick={handleAIDraft}
+                          disabled={aiDraftLoading}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs
+                                    text-indigo-600 border border-indigo-200 rounded-lg
+                                    hover:bg-indigo-50 transition-colors
+                                    disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {aiDraftLoading
+                            ? <><div className="animate-spin rounded-full h-3 w-3
+                                                border-b-2 border-indigo-500" /> Drafting...</>
+                            : <><Sparkles size={12} /> Draft with AI</>
+                          }
+                        </button>
+                      )}
+
 
                     <input
                       ref={fileInputRef}
