@@ -1,4 +1,4 @@
-@SupportDeskPro.API_HostAddress = http://localhost:5140
+@SupportDeskPro.API_HostAddress = http://localhost:7230
 
 GET {{SupportDeskPro.API_HostAddress}}/weatherforecast/
 Accept: application/json

@@ -32,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IApplicationDbContext>(provider =>provider.GetRequiredService<ApplicationDbContext>());
         services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<IAICategorizationService, AICategorizationService>();
 
         // ── JWT AUTHENTICATION ────────────────────────────────
         var jwtSecret = configuration["JwtSettings:Secret"]!;

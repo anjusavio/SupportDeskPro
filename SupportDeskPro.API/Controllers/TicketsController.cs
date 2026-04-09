@@ -20,6 +20,7 @@ using SupportDeskPro.Application.Interfaces;
 using SupportDeskPro.Contracts.Common;
 using SupportDeskPro.Contracts.Tickets;
 using System.Security.Claims;
+using SupportDeskPro.Application.Features.Tickets.AICategorizationSuggest;
 
 namespace SupportDeskPro.API.Controllers;
 
@@ -218,4 +219,20 @@ public class TicketsController : ControllerBase
 
         return Ok(ApiResponse<List<TicketStatusHistoryResponse>>.Ok(result));
     }
+
+    /// <summary>
+    /// Returns AI suggested category and priority for a ticket.
+    /// Called from frontend while customer is typing.
+    /// AI failure returns a default response — never throws.
+    /// </summary>
+    // POST /api/tickets/ai-suggest
+    [HttpPost("ai-suggest")]
+    [Authorize(Roles = "Customer")]
+    public async Task<IActionResult> AISuggest([FromBody] AISuggestRequest request)
+    {
+        var result = await _mediator.Send(new AISuggestQuery(request.Title, request.Description));
+
+        return Ok(ApiResponse<AISuggestResponse>.Ok(result));
+    }
+
 }
