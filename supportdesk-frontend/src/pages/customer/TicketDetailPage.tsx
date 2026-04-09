@@ -648,6 +648,11 @@ async function handleAIDraft() {
     ? comments.filter(c => !c.isInternal || showInternal)
     : comments.filter(c => !c.isInternal);
 
+    // Count of hidden internal comments (for badge in toggle button)
+  const hiddenInternalCount = isAgentOrAdmin
+  ? comments.filter(c => c.isInternal && !showInternal).length
+  : 0;
+
   // ─── 12. Loading / error states ──────────────────────────────────────────
   if (ticketLoading) {
     return (
@@ -763,19 +768,29 @@ async function handleAIDraft() {
                     ({visibleComments.length} messages)
                   </span>
                 </h2>
-                {isAgentOrAdmin && (
-                  <button
-                    onClick={() => setShowInternal(v => !v)}
-                    className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full transition-colors ${
-                      showInternal
-                        ? 'bg-amber-100 text-amber-700'
+              {isAgentOrAdmin && (
+                <button
+                  onClick={() => setShowInternal(v => !v)}
+                  className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full 
+                              transition-colors relative ${
+                    showInternal
+                      ? 'bg-amber-100 text-amber-700'
+                      : hiddenInternalCount > 0
+                        ? 'bg-amber-50 text-amber-600 border border-amber-300 animate-pulse'
                         : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                    }`}
-                  >
-                    {showInternal ? <Lock size={11} /> : <Unlock size={11} />}
-                    {showInternal ? 'Hiding' : 'Show'} internal notes
-                  </button>
-                )}
+                  }`}
+                >
+                  {showInternal ? <Lock size={11} /> : <Unlock size={11} />}
+                  {showInternal ? 'Hide' : 'Show'} internal notes
+                  {/* Badge — only when hidden notes exist */}
+                  {!showInternal && hiddenInternalCount > 0 && (
+                    <span className="ml-1 bg-amber-500 text-white text-[10px] font-bold
+                                    px-1.5 py-0.5 rounded-full">
+                      {hiddenInternalCount}
+                    </span>
+                  )}
+                </button>
+              )}
               </div>
 
               <div className="p-5 space-y-5">
