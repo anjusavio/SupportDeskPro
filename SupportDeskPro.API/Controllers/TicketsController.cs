@@ -1,7 +1,9 @@
 ﻿/// <summary>
 /// REST controller for ticket management.
 /// Customers create and view their own tickets.
+/// AI suggestion for category and priority while creating a ticket.
 /// Agents view and update tickets assigned to them.
+/// AI draft reply generation for agents to review and edit.
 /// Admins manage all tickets including assignment.
 /// </summary>
 using MediatR;
@@ -21,6 +23,7 @@ using SupportDeskPro.Contracts.Common;
 using SupportDeskPro.Contracts.Tickets;
 using System.Security.Claims;
 using SupportDeskPro.Application.Features.Tickets.AICategorizationSuggest;
+using SupportDeskPro.Application.Features.Tickets.AIDraftReply;
 
 namespace SupportDeskPro.API.Controllers;
 
@@ -233,6 +236,20 @@ public class TicketsController : ControllerBase
         var result = await _mediator.Send(new AISuggestQuery(request.Title, request.Description));
 
         return Ok(ApiResponse<AISuggestResponse>.Ok(result));
+    }
+
+
+    /// <summary>
+    /// Generates an AI-drafted reply for the agent to review and edit.
+    /// Based on ticket content and full conversation history.
+    /// Agent always reviews before sending — AI never sends automatically.
+    /// </summary>
+    [HttpPost("{id}/ai-draft-reply")]
+    [Authorize(Roles = "Admin,Agent")]
+    public async Task<IActionResult> AIDraftReply(Guid id,[FromBody] AIDraftReplyRequest request)
+    {
+        var result = await _mediator.Send(new AIDraftReplyQuery(id, request.IsInternal));
+        return Ok(ApiResponse<AIDraftReplyResponse>.Ok(result));
     }
 
 }

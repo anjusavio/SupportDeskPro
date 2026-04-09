@@ -33,6 +33,7 @@ public static class DependencyInjection
         services.AddScoped<IApplicationDbContext>(provider =>provider.GetRequiredService<ApplicationDbContext>());
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IAICategorizationService, AICategorizationService>();
+        services.AddScoped<IAIDraftReplyService, AIDraftReplyService>();
 
         // ── JWT AUTHENTICATION ────────────────────────────────
         var jwtSecret = configuration["JwtSettings:Secret"]!;
