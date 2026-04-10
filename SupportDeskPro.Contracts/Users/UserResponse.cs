@@ -27,5 +27,7 @@ public record AgentSummaryResponse(
     Guid Id,
     string FirstName,
     string LastName,
-    string Email
+    string Email,
+    int OpenTicketCount,
+    bool IsRecommended
 );
