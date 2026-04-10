@@ -127,6 +127,8 @@ interface AgentSummaryResponse {
   firstName: string;
   lastName: string;
   email: string;
+  openTicketCount: number;
+  isRecommended: boolean; 
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -442,6 +444,7 @@ function AssignAgentDropdown({
   }, [currentAgentId]);
 
   const hasChanged = selectedId !== (currentAgentId ?? '');
+  const selectedAgent = agents.find(a => a.id === selectedId);
 
   return (
     <div className="flex flex-col gap-2 items-end">
@@ -456,10 +459,28 @@ function AssignAgentDropdown({
         <option value="">Unassigned</option>
         {agents.map((agent) => (
           <option key={agent.id} value={agent.id}>
-            {`${agent.firstName} ${agent.lastName}`}
+            {agent.firstName} {agent.lastName}
+            {' '}({agent.openTicketCount}   open)
+            {agent.isRecommended ? ' ⭐' : ''}
           </option>
         ))}
       </select>
+
+      {/* Selected agent workload info  and color changing based on workload */}
+      {selectedId && selectedAgent && (
+        <div className={`text-[10px] px-2 py-1 rounded-lg ${
+          selectedAgent.isRecommended
+            ? 'bg-green-50 text-green-600'
+            : selectedAgent.openTicketCount > 5
+              ? 'bg-orange-50 text-orange-600'
+              : 'bg-gray-50 text-gray-500'
+        }`}>
+          {selectedAgent.isRecommended
+            ? `Recommended — ${selectedAgent.openTicketCount} open tickets`
+            : `${selectedAgent.openTicketCount} open tickets`
+          }
+        </div>
+      )}
 
       {/* Assign button — only shows when selection has changed */}
       {hasChanged && (
