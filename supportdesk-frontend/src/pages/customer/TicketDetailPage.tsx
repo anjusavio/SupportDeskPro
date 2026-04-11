@@ -131,6 +131,17 @@ interface AgentSummaryResponse {
   isRecommended: boolean; 
 }
 
+interface SimilarTicket {
+  id: string;
+  ticketNumber: number;
+  title: string;
+  categoryName: string;
+  status: string;
+  resolution: string | null;
+  similarityScore: number;
+  resolvedAt: string;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ZOD SCHEMA — reply / internal note form
 // ─────────────────────────────────────────────────────────────────────────────
@@ -580,6 +591,17 @@ const TicketDetailPage: React.FC = () => {
         .then((r) => r.data.data ?? []),
     enabled: isAdmin, // only fetch for Admin 
   });
+
+  // ─── Query: similar tickets (Agent/Admin only) ───────────────────
+const { data: similarTickets = [] } = useQuery<SimilarTicket[]>({
+  queryKey: ['similar-tickets', id],
+  queryFn: () =>
+    axiosClient
+      .get<ApiResponse<SimilarTicket[]>>(`/tickets/${id}/similar`)
+      .then(r => r.data.data ?? []),
+  enabled: !!ticket && isAgentOrAdmin,
+  staleTime: 60 * 60 * 1000, // 1 hour — avoids repeated Claude calls
+});
 
   // ─── 8. Mutation: assign ticket (Admin only) ─────────────────────────────
   const assignMutation = useMutation({
@@ -1088,6 +1110,115 @@ async function handleAIDraft() {
                 </ol>
               </div>
             )}
+
+            {/* ── Similar Past Tickets Panel Display (Agent/Admin only) ── */}
+              {isAgentOrAdmin && (
+                <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+
+                  {/* Header */}
+                  <div className="flex items-center gap-2 mb-4">
+                    <h2 className="text-xs font-semibold text-gray-400
+                                  uppercase tracking-wider">
+                      Similar Past Tickets
+                    </h2>
+                    {similarTickets.length > 0 && (
+                      <span className="text-[10px] bg-indigo-100 text-indigo-600
+                                      px-2 py-0.5 rounded-full font-medium">
+                        {similarTickets.length} found
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Empty state */}
+                  {similarTickets.length === 0 && (
+                    <p className="text-xs text-gray-400 italic">
+                      No similar resolved tickets found yet.
+                      Results improve as more tickets are resolved.
+                    </p>
+                  )}
+
+                  {/* Ticket cards */}
+                  <div className="space-y-3">
+                    {similarTickets.map((similar) => (
+                      <div
+                        key={similar.id}
+                        className="border border-gray-100 rounded-xl p-3
+                                  hover:border-indigo-200 hover:bg-indigo-50
+                                  transition-colors"
+                      >
+                        {/* Header row — ticket number, status, score */}
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-mono text-indigo-500">
+                              #{similar.ticketNumber}
+                            </span>
+                            <span className={`text-[10px] font-semibold
+                                            px-1.5 py-0.5 rounded ${
+                              similar.status === 'Resolved'
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-gray-100 text-gray-600'
+                            }`}>
+                              {similar.status}
+                            </span>
+                          </div>
+
+                          {/* AI similarity score */}
+                          <span className={`text-[10px] font-bold
+                                          px-1.5 py-0.5 rounded-full ${
+                            similar.similarityScore >= 0.9
+                              ? 'bg-green-100 text-green-700'
+                              : similar.similarityScore >= 0.7
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-gray-100 text-gray-500'
+                          }`}>
+                            {Math.round(similar.similarityScore * 100)}% match
+                          </span>
+                        </div>
+
+                        {/* Category */}
+                        <p className="text-[10px] text-gray-400 mb-1">
+                          {similar.categoryName}
+                        </p>
+
+                        {/* Title — click to open ticket */}
+                        <p
+                          onClick={() => navigate(`/tickets/${similar.id}`)}
+                          className="text-xs font-medium text-gray-800 mb-2
+                                    line-clamp-2 cursor-pointer
+                                    hover:text-indigo-600 transition-colors"
+                        >
+                          {similar.title}
+                        </p>
+
+                        {/* Resolution box */}
+                        {similar.resolution && (
+                          <div className="bg-green-50 border border-green-100
+                                          rounded-lg px-3 py-2 mt-2">
+                            <p className="text-[10px] font-semibold
+                                          text-green-700 mb-1">
+                              How it was resolved:
+                            </p>
+                            <p className="text-[10px] text-green-700 line-clamp-3">
+                              {similar.resolution}
+                            </p>
+                            <button
+                              onClick={() => {
+                                setValue('body', similar.resolution!);
+                                toast.success('Resolution copied to reply box. ');
+                              }}
+                              className="mt-2 text-[10px] font-medium
+                                        text-green-600 hover:text-green-800
+                                        underline"
+                            >
+                              Use this reply →
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
           </div>
         </div>
       </div>
