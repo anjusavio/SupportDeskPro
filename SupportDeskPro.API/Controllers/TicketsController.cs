@@ -24,6 +24,7 @@ using SupportDeskPro.Contracts.Tickets;
 using System.Security.Claims;
 using SupportDeskPro.Application.Features.Tickets.AICategorizationSuggest;
 using SupportDeskPro.Application.Features.Tickets.AIDraftReply;
+using SupportDeskPro.Application.Features.Tickets.AIGetSimilarTickets;
 
 namespace SupportDeskPro.API.Controllers;
 
@@ -238,7 +239,6 @@ public class TicketsController : ControllerBase
         return Ok(ApiResponse<AISuggestResponse>.Ok(result));
     }
 
-
     /// <summary>
     /// Generates an AI-drafted reply for the agent to review and edit.
     /// Based on ticket content and full conversation history.
@@ -250,6 +250,21 @@ public class TicketsController : ControllerBase
     {
         var result = await _mediator.Send(new AIDraftReplyQuery(id, request.IsInternal));
         return Ok(ApiResponse<AIDraftReplyResponse>.Ok(result));
+    }
+
+
+    /// <summary>
+    /// Returns top 3 semantically similar resolved tickets.
+    /// Two-stage: SQL pre-filters candidates, Claude scores semantically.
+    /// Admin and Agent only — not visible to customers.
+    /// Returns empty list if no similar tickets found or AI fails.
+    /// </summary>
+    [HttpGet("{id}/similar")]
+    [Authorize(Roles = "Admin,Agent")]
+    public async Task<IActionResult> GetSimilarTickets(Guid id)
+    {
+        var result = await _mediator.Send(new AIGetSimilarTicketsQuery(id));
+        return Ok(ApiResponse<List<AISimilarTicketResponse>>.Ok(result));
     }
 
 }
