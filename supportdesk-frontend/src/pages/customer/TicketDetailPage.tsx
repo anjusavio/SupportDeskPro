@@ -142,6 +142,15 @@ interface SimilarTicket {
   resolvedAt: string;
 }
 
+//AI sentiment analysis result for the ticket.
+interface SentimentAnalysis {
+  level: string;           // Frustrated | Concerned | Neutral
+  label: string;           // full label shown in badge
+  confidence: number;      // 0 to 1
+  triggerPhrases: string[];
+  agentAdvice: string;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ZOD SCHEMA — reply / internal note form
 // ─────────────────────────────────────────────────────────────────────────────
@@ -593,15 +602,54 @@ const TicketDetailPage: React.FC = () => {
   });
 
   // ─── Query: similar tickets (Agent/Admin only) ───────────────────
-const { data: similarTickets = [] } = useQuery<SimilarTicket[]>({
-  queryKey: ['similar-tickets', id],
-  queryFn: () =>
-    axiosClient
-      .get<ApiResponse<SimilarTicket[]>>(`/tickets/${id}/similar`)
-      .then(r => r.data.data ?? []),
-  enabled: !!ticket && isAgentOrAdmin,
-  staleTime: 60 * 60 * 1000, // 1 hour — avoids repeated Claude calls
-});
+  const { data: similarTickets = [] } = useQuery<SimilarTicket[]>({
+    queryKey: ['similar-tickets', id],
+    queryFn: () =>
+      axiosClient
+        .get<ApiResponse<SimilarTicket[]>>(`/tickets/${id}/similar`)
+        .then(r => r.data.data ?? []),
+    enabled: !!ticket && isAgentOrAdmin,
+    staleTime: 60 * 60 * 1000, // 1 hour — avoids repeated Claude calls
+  });
+
+  // ─── Query: AI sentiment analysis (Agent/Admin only) ────────────────
+  const { data: sentiment } = useQuery<SentimentAnalysis>({
+    queryKey: ['ticket-sentiment', id],
+    queryFn: () =>
+      axiosClient
+        .get<ApiResponse<SentimentAnalysis>>(`/tickets/${id}/sentiment`)
+        .then(r => r.data.data!),
+    enabled: !!ticket && isAgentOrAdmin, // agents and admins only 
+    staleTime: 5 * 60 * 1000,           // 5 minutes — refreshes as customer replies
+  });
+
+    // Sentiment level config — controls badge color and icon
+  const SENTIMENT_CONFIG = {
+    Frustrated: {
+      bg:       'bg-red-50',
+      border:   'border-red-200',
+      badge:    'bg-red-100 text-red-700',
+      dot:      'bg-red-500',
+      icon:     '🔴',
+      advice:   'text-red-600',
+    },
+    Concerned: {
+      bg:       'bg-amber-50',
+      border:   'border-amber-200',
+      badge:    'bg-amber-100 text-amber-700',
+      dot:      'bg-amber-400',
+      icon:     '🟡',
+      advice:   'text-amber-600',
+    },
+    Neutral: {
+      bg:       'bg-green-50',
+      border:   'border-green-200',
+      badge:    'bg-green-100 text-green-700',
+      dot:      'bg-green-500',
+      icon:     '🟢',
+      advice:   'text-green-600',
+    },
+  };
 
   // ─── 8. Mutation: assign ticket (Admin only) ─────────────────────────────
   const assignMutation = useMutation({
@@ -835,6 +883,55 @@ async function handleAIDraft() {
                 </button>
               )}
               </div>
+
+               {/* ── AI : Sentiment Banner — shown only to Agent/Admin ── */}
+                {isAgentOrAdmin && sentiment  && (
+                  (() => {
+                    const cfg = SENTIMENT_CONFIG[sentiment.level as keyof typeof SENTIMENT_CONFIG]
+                                ?? SENTIMENT_CONFIG.Neutral;
+                    return (
+                      <div className={`mx-4 mt-4 rounded-xl border px-4 py-3 ${cfg.bg} ${cfg.border}`}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1">
+
+                            {/* Badge row */}
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <span className="text-sm">{cfg.icon}</span>
+                              <span className={`text-xs font-bold px-2.5 py-0.5
+                                                rounded-full ${cfg.badge}`}>
+                                {sentiment.label}
+                              </span>
+                              {sentiment.confidence > 0 && (
+                                <span className="text-[10px] text-gray-400">
+                                  {Math.round(sentiment.confidence * 100)}% confidence
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Trigger phrases */}
+                            {sentiment.triggerPhrases.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mb-2">
+                                {sentiment.triggerPhrases.map((phrase, i) => (
+                                  <span key={i}
+                                    className="text-[10px] italic text-gray-500
+                                              bg-white border border-gray-200
+                                              px-2 py-0.5 rounded-full">
+                                    "{phrase}"
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Agent advice */}
+                            <p className={`text-xs font-medium ${cfg.advice}`}>
+                              💡 {sentiment.agentAdvice}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()
+                )}
 
               <div className="p-5 space-y-5">
                 {visibleComments.length === 0 ? (
@@ -1111,7 +1208,7 @@ async function handleAIDraft() {
               </div>
             )}
 
-            {/* ── Similar Past Tickets Panel Display (Agent/Admin only) ── */}
+            {/* ── AI : Similar Past Tickets Panel Display (Agent/Admin only) ── */}
               {isAgentOrAdmin && (
                 <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
 
