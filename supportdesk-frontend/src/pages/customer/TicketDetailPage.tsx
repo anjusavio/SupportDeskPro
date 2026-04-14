@@ -85,7 +85,7 @@ interface TicketDetail {
   categoryName: string;
   assignedAgentId: string | null;
   assignedAgentName: string | null;
-  createdByName: string;
+  customerName: string;
   createdAt: string;
   updatedAt: string;
   slaFirstResponseDueAt: string | null;
@@ -1102,7 +1102,7 @@ async function handleAIDraft() {
                 <span className="text-sm text-gray-700">{ticket.categoryName}</span>
               </InfoRow>
               <InfoRow label="Created by">
-                <span className="text-sm text-gray-700">{ticket.createdByName}</span>
+                <span className="text-sm text-gray-700">{ticket.customerName}</span>
               </InfoRow>
             <InfoRow label="Assigned to">
               {isAdmin ? (
