@@ -1,12 +1,15 @@
 #  **SupportDesk Pro**
 
 ## **About The Project**
-SupportDesk Pro is a multi-tenant customer support platform built with .NET 9 and React TypeScript, deployed on Microsoft Azure. I built this for businesses that need a reliable and structured way to manage customer support — a system where tickets are tracked, SLAs are enforced, agents are accountable, and nothing gets lost in an email thread.
+SupportDesk Pro is a multi-tenant customer support platform built with .NET 9 and React TypeScript, deployed on Microsoft Azure. I built this for businesses that need a reliable and structured way to manage customer support — a system where tickets are tracked, SLAs are enforced, agents are accountable, and nothing gets lost in an email thread. It also 
+integrates Claude AI for ticket categorization, reply drafting, similar ticket search, 
+and customer sentiment detection — features that directly reduce agent workload and 
+improve response quality.
 
 **Live app**: https://kind-coast-000fe8c1e.2.azurestaticapps.net
 
 **API docs**: https://supportdeskpro-api.victoriousdune-73ebad30.westus.azurecontainerapps.io/swagger
-
+y.
 
 ---
 
@@ -15,15 +18,45 @@ SupportDesk Pro is a multi-tenant customer support platform built with .NET 9 an
 Most support operations start with email. It works until it doesn't — tickets get missed, response times are inconsistent, and there is no visibility into who is handling what. I wanted to build something that solves this properly, the way a real company would.
 The result is a platform that handles the full ticket lifecycle from creation to closure, enforces SLA deadlines automatically, sends real email notifications, and keeps every company's data completely isolated even though they share the same database. Multiple companies can run on a single deployment. Each one manages their own team, agents, categories, and SLA policies independently.
 
+Beyond the core platform, the system has a practical AI layer built on top. Agents waste 
+time triaging tickets, writing the same replies repeatedly, and walking into conversations 
+without knowing the customer is already frustrated. Claude AI addresses each of these 
+directly — suggesting category and priority as the customer types, drafting contextual 
+replies agents can edit and send, surfacing similar resolved tickets with extracted 
+resolution steps, and detecting customer sentiment before the agent writes a single word.
+
 ### **How It Works**
 
 There are three user roles, each with a distinct experience.
 
-**Customers** register under their company's tenant using a slug that identifies which organisation they belong to. They raise tickets when they need help, communicate with the support team through a threaded conversation, and receive email updates whenever an agent responds or changes the ticket status. They can see SLA countdown timers on their tickets so they always know whether the team is on track.
+**Customers** register under their company's tenant using a slug that identifies which 
+organisation they belong to. They raise tickets when they need help, communicate with 
+the support team through a threaded conversation, and receive email updates whenever an 
+agent responds or changes the ticket status. They can see SLA countdown timers on their 
+tickets so they always know whether the team is on track. As they type a new ticket, 
+Claude AI reads the title and description and suggests the most appropriate category and 
+priority — the customer can apply the suggestion with one click or ignore it entirely.
 
-**Agents** see only the tickets assigned to them — not the entire queue. They reply publicly to customers, leave internal notes that customers never see, update ticket status as work progresses, and track live SLA timers that show how much time remains before a deadline is breached.
+**Agents** see only the tickets assigned to them — not the entire queue. They reply 
+publicly to customers, leave internal notes that customers never see, update ticket 
+status as work progresses, and track live SLA timers that show how much time remains 
+before a deadline is breached. Before writing a reply, agents see a sentiment banner 
+that tells them whether the customer is frustrated, concerned, or calm — along with the 
+exact phrases that triggered it and specific advice on how to respond. They can also 
+click "Draft with AI" to get a Claude-generated reply based on the full ticket history, 
+adjusted automatically depending on whether it is a public reply or an internal note. 
+A similar tickets panel shows up to three resolved tickets with semantically related 
+issues and the actionable steps that fixed them, so agents can apply proven solutions 
+without searching manually.
 
-**Administrators** have full visibility across everything. They invite and manage agents, configure ticket categories and SLA policies, assign tickets, and monitor team performance through the analytics dashboard. Every card on the dashboard is clickable and navigates directly to a filtered ticket list.
+**Administrators** have full visibility across everything. They invite and manage agents, 
+configure ticket categories and SLA policies, assign tickets, and monitor team 
+performance through the analytics dashboard. Every card on the dashboard is clickable 
+and navigates directly to a filtered ticket list. All the AI features available to agents 
+are also available to admins when they open a ticket directly. When assigning a ticket, 
+the agent dropdown is sorted by current open ticket count — the agent with the least 
+active tickets appears at the top with a star, making it easy to distribute workload 
+evenly across the team without checking dashboards or asking around.
 
 ---
 
@@ -43,6 +76,15 @@ There are three user roles, each with a distinct experience.
 - Serilog — structured logging with daily rolling files and console sink
 - Global Exception Middleware — consistent error responses across all endpoints
 - ICurrentTenantService — resolves TenantId, UserId and Role from JWT claims on every request
+
+### **AI — Claude API**
+
+- Anthropic SDK with Claude Haiku (claude-haiku-4-5-20251001)
+- Ticket categorization — suggests category and priority as customer types
+- AI reply drafting — generates context-aware replies for agents and admins
+- RAG-inspired similar ticket search — SQL pre-filters candidates, Claude scores semantically
+- Customer sentiment detection — warns agents of frustrated or concerned customers before they reply
+- All AI features degrade gracefully — failures return safe defaults, never block the workflow
 
 ### **Frontend — React 18 + TypeScript**
 
@@ -84,12 +126,20 @@ React TypeScript SPA (Azure Static Web Apps)
         |-- JWT Token Service
         |-- Email Service (MailKit/SMTP)
         |-- Current Tenant Service
+         |-- AI Services
+        |       |-- IAICategorizationService   → suggests category + priority as customer types
+        |       |-- IAIDraftReplyService       → context-aware reply drafting for agents
+        |       |-- IAISimilarTicketService    → RAG-inspired similar ticket search (SQL pre-filters candidates + Claude scores semantically)
+        |       |-- IAISentimentService        → detects customer frustration before agent replies
         |
-Azure SQL Database
-  - TenantId on every table
-  - EF Core Global Query Filters enforce isolation
-  - Soft delete on all entities
-
+        |                              |
+        ▼                              ▼
+Azure SQL Database              Anthropic Claude API
+- TenantId on every table       - claude-haiku-4-5-20251001
+- EF Core Global Query          - IAICategorizationService
+  Filters enforce isolation     - IAIDraftReplyService
+- Soft delete on all entities   - IAISimilarTicketService (after SQL pre-filter)
+                                - IAISentimentService
 ```
 
 ---
@@ -111,14 +161,19 @@ SupportDeskPro/
 │   ├── Features/
 │   │   ├── Auth/                       -- Register, Login, VerifyEmail, Forgot and Change Password
 │   │   ├── Categories/                 -- Create, Get, Update categories
-│   │   ├── Comments/                   -- Create, Get Update andDelete Comment
+│   │   ├── Comments/                   -- Create, Get Update and Delete Comment
 │   │   ├── Dashboard/                  -- Admin and Agent stats queries
 │   │   ├── Notifications/              -- GetNotifications, MarkAsRead, MarkAllAsRead
 │   │   ├── SLAPolicies/                -- Full CRUD per priority level
 │   │   ├── Tenants/                    -- Create, Get, Update tenants
-│   │   ├── Tickets/                    -- CreateTicket, GetTickets, UpdateStatus, AssignTicket
+│   │   ├── Tickets/                    -- Create Ticket, Get Tickets, AssignTicket,UpdateStatus, AIGetSimilarTickets,
+                                           AIAnalyseSentiment, AIDraftReply,AISuggest
 │   │   └── Users/                      -- InviteAgent, GetUsers, UpdateStatus, UpdateRole, etc
 │   ├── Interfaces/
+│   │   ├── IAICategorizationService.cs
+│   │   ├── IAIDraftReplyService.cs
+│   │   ├── IAISentimentService.cs
+│   │   ├── IAISimilarTicketService.cs
 │   │   ├── IApplicationDbContext.cs
 │   │   ├── ICurrentTenantService.cs
 │   │   ├── IEmailService.cs
@@ -134,7 +189,7 @@ SupportDeskPro/
 ├── SupportDeskPro.Infrastructure/
 │   ├── Migrations/                     -- EF Core migration history
 │   ├── Persistence/                    -- ApplicationDbContext, entity configurations
-│   └── Services/                       -- EmailService, CurrentTenantService, JwtTokenService, etc
+│   └── Services/                       -- EmailService, CurrentTenantService, JwtTokenService, AI related services etc
 │
 └── SupportDeskPro.Contracts/
 │    └── */                             -- Request and response DTOs per feature
@@ -177,7 +232,9 @@ SupportDeskPro/
     │   │   │   ├── CreateTicketPage.tsx        -- Ticket creation form with category and priority 
     │   │   │   ├── CustomerDashboardPage.tsx   -- Ticket summary cards and recent tickets 
     │   │   │   ├── MyTicketsPage.tsx           -- Customer's own tickets with status filter tabs
-    │   │   │   └── TicketDetailPage.tsx        -- Tickets view, conversation, SLA timers, status history
+    │   │   │   └── TicketDetailPage.tsx        -- Tickets view, conversation, SLA timers, status history,
+                                                   Category and  Priority suggestion, Draft with AI,  
+                                                   Similar past tickets,sentimental suggestion, etc
     │   │   │
     │   │   └── shared/
     │   │       └── NotificationsPage.tsx       -- notifications with mark as read and mark all as read
@@ -235,6 +292,67 @@ Open → In Progress → On Hold → Resolved → Closed. Transitions are valida
 
 ### **Comments and Internal Notes**
 The ticket conversation thread supports two types of messages. Public replies are visible to everyone on the ticket and trigger email notifications to the other party. Internal notes are only visible to agents and admins — the backend filters them out completely from customer-facing responses and they are displayed with an amber background and a lock icon so agents can distinguish them at a glance. The first public comment from an agent or admin automatically sets the SLA first response timestamp, stopping the first response timer. Comment authors can edit their own comments. Admins can delete any comment.
+
+### **AI Features (Claude API)**
+
+This is where the project goes beyond a standard help desk. Four AI features are 
+integrated using Claude Haiku — each one targeting a specific pain point in the 
+support workflow rather than adding AI for the sake of it.
+
+**1. Ticket Categorization Suggestion**
+
+As a customer types their ticket title and description, Claude reads the content in 
+real time and suggests the most appropriate category and priority along with a 
+confidence score. The suggestion appears as a banner the customer can apply with one 
+click or dismiss entirely. Their manual selection always wins — the AI never overrides 
+the customer's choice. If the confidence is below 60% Claude stays silent rather than 
+showing an uncertain suggestion.
+
+**2. AI Reply Drafting**
+
+Agents spend a significant portion of their day writing replies that follow the same 
+structure — acknowledge the issue, provide steps, offer further help. The "Draft with AI" 
+button sends the full ticket history to Claude and gets back a ready-to-edit response. 
+What makes this context-aware is the internal note toggle. If the agent is writing a 
+public reply to the customer, Claude drafts something friendly and professional with a 
+greeting and clear steps. If the toggle is switched to internal note, Claude drafts a 
+direct technical note for the team with no pleasantries. The agent always reviews, edits 
+if needed, and decides when to send — Claude never sends anything on its own.
+
+**3. RAG-Inspired Similar Ticket Search**
+
+When an agent opens a ticket, a panel in the right column automatically surfaces up to 
+three resolved tickets with semantically related issues. The search runs in two stages 
+to keep it fast, accurate, and cost-effective.
+
+Stage 1 is SQL — the database pre-filters up to 20 resolved tickets from the same 
+category as the current ticket. This narrows the candidates quickly and cheaply before 
+any AI is involved, ensuring Claude only ever sees relevant tickets rather than the 
+entire history.
+
+Stage 2 is Claude — the 20 candidates are sent to Claude Haiku which reads each one 
+and scores it for semantic similarity against the current ticket. Unlike keyword search, 
+Claude understands meaning — "cannot login" and "locked out of account" score as similar 
+even though they share no words. Only tickets scoring above 0.5 are returned, and the 
+top 3 are shown ordered by score.
+
+For each matched ticket, a third Claude call reads the full public conversation and 
+extracts the resolution as actionable steps the agent can follow directly — not a 
+description of what happened in the past. A ticket that was resolved by asking the 
+customer to clear their browser cache comes back as "Try to clear your browser cache and try logging in again" — something the agent can read in two seconds and act on immediately. Agents can copy the resolution directly into the reply box with one click.
+
+**4. Customer Sentiment Detection**
+
+Before an agent writes a single word, Claude has already read the customer's original 
+description and all their subsequent replies to determine their emotional state. A red 
+banner means the customer sounds frustrated — it shows the exact phrases that triggered 
+the detection and tells the agent to acknowledge the frustration immediately and 
+prioritise resolution. Amber means the customer sounds confused or uncertain and needs 
+extra clarity. Green banner means the customer is calm and a standard professional response 
+is fine. 
+
+All AI features fail silently — if Claude is unavailable for any reason, the workflow 
+continues without interruption and the agent simply does not see the panel.
 
 ### **Email Notifications**
 Nine HTML email templates sent via MailKit over SMTP. Every template uses a consistent layout with the SupportDesk Pro header and a clear call-to-action button:
@@ -322,9 +440,12 @@ Every main table has soft delete (IsDeleted, DeletedAt, DeletedBy) and audit fie
         },
           "EmailSettings": {
             "FrontendUrl": "http://localhost:3000"
+          },
+           "AnthropicSettings": {
+            "ApiKey": "sk-ant-api03-your-key-here" 
           }
 
-        The base appsettings.json has SMTP and JWT configuration. Update the Gmail app password if you want emails to actually send locally.
+        The base appsettings.json has SMTP and JWT configuration. Update the Gmail app password if you want emails to actually send locally. Get your Anthroic API key from https://console.anthropic.com. 
 
 
 3. ***Apply migrations from the API project***
@@ -384,6 +505,7 @@ Every main table has soft delete (IsDeleted, DeletedAt, DeletedBy) and audit fie
       JwtSettings__RefreshTokenExpiryDays      7
       EmailSettings__FrontendUrl               https://your-app.azurestaticapps.net
       AllowedOrigins                           https://your-app.azurestaticapps.net
+      AnthropicSettings__ApiKey                ypur Anthropic API key 
       ASPNETCORE_ENVIRONMENT                   Production
     ```
 
@@ -465,6 +587,10 @@ Check the Health of App : https://supportdeskpro-api.victoriousdune-73ebad30.wes
 - **PATCH** `/api/tickets/{id}/status` — Update ticket status
 - **PATCH** `/api/tickets/{id}/assign` — Assign a ticket
 - **GET** `/api/tickets/{id}/history` — Get ticket history
+- **GET** `/api/tickets/{id}/similar` — AI : RAG-inspired similar resolved tickets with extracted resolution steps
+- **GET** `/api/tickets/{id}/sentiment` — AI : Customer sentiment analysis (Frustrated / Concerned / Neutral)
+- **POST** `/api/tickets/{id}/ai-draft-reply` — AI : Generate context-aware reply draft for agent or internal note
+- **POST** `/api/tickets/ai-suggest` — AI : Suggest category and priority as customer types
 
 ## Users
 - **GET** `/api/users` — Retrieve a list of all users.
@@ -551,7 +677,6 @@ A few things still on the list:
 -	Ticket file attachments
 -	Reports page with PDF and Excel export
 -	Background job for automatic SLA breach detection
--	AI-powered ticket categorization and priority suggestion
 -	Customer satisfaction ratings after resolution
 
 ---
@@ -560,7 +685,7 @@ A few things still on the list:
 
 **Anju Savio**
 
-Senior Full Stack Developer — .NET + React + Azure 
+Senior Full Stack Developer — .NET + React + Azure + Generative AI
 
 *LinkedIn*: https://www.linkedin.com/in/anjusavio
 
