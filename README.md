@@ -9,7 +9,6 @@ improve response quality.
 **Live app**: https://kind-coast-000fe8c1e.2.azurestaticapps.net
 
 **API docs**: https://supportdeskpro-api.victoriousdune-73ebad30.westus.azurecontainerapps.io/swagger
-y.
 
 ---
 
