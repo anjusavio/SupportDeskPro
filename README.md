@@ -15,7 +15,7 @@ improve response quality.
 ### **The Problem It Solves**
 
 Most support operations start with email. It works until it doesn't — tickets get missed, response times are inconsistent, and there is no visibility into who is handling what. I wanted to build something that solves this properly, the way a real company would.
-The result is a platform that handles the full ticket lifecycle from creation to closure, enforces SLA deadlines automatically, sends real email notifications, and keeps every company's data completely isolated even though they share the same database. Multiple companies can run on a single deployment. Each one manages their own team, agents, categories, and SLA policies independently.
+The result is a platform that handles the full ticket lifecycle from creation to closure, enforces SLA deadlines automatically, upload/download supporting documents, sends real email notifications, and keeps every company's data completely isolated even though they share the same database. Multiple companies can run on a single deployment. Each one manages their own team, agents, categories, and SLA policies independently.
 
 Beyond the core platform, the system has a practical AI layer built on top. Agents waste 
 time triaging tickets, writing the same replies repeatedly, and walking into conversations 
@@ -30,19 +30,10 @@ There are three user roles, each with a distinct experience.
 
 **Customers** register under their company's tenant using a slug that identifies which 
 organisation they belong to. They raise tickets when they need help, communicate with 
-the support team through a threaded conversation, and receive email updates whenever an 
-agent responds or changes the ticket status. They can see SLA countdown timers on their 
-tickets so they always know whether the team is on track. As they type a new ticket, 
-Claude AI reads the title and description and suggests the most appropriate category and 
-priority — the customer can apply the suggestion with one click or ignore it entirely.
+the support team through a threaded conversation, upload/download supporting documents, and receive email updates whenever an agent responds or changes the ticket status. They can see SLA countdown timers on their tickets so they always know whether the team is on track. As they type a new ticket, Claude AI reads the title and description and suggests the most appropriate category and priority — the customer can apply the suggestion with one click or ignore it entirely.
 
 **Agents** see only the tickets assigned to them — not the entire queue. They reply 
-publicly to customers, leave internal notes that customers never see, update ticket 
-status as work progresses, and track live SLA timers that show how much time remains 
-before a deadline is breached. Before writing a reply, agents see a sentiment banner 
-that tells them whether the customer is frustrated, concerned, or calm — along with the 
-exact phrases that triggered it and specific advice on how to respond. They can also 
-click "Draft with AI" to get a Claude-generated reply based on the full ticket history, 
+publicly to customers, download/upload the supporting documents, leave internal notes that customers never see, update ticket status as work progresses, and track live SLA timers that show how much time remains before a deadline is breached. Before writing a reply, agents see a sentiment banner that tells them whether the customer is frustrated, concerned, or calm — along with the exact phrases that triggered it and specific advice on how to respond. They can also click "Draft with AI" to get a Claude-generated reply based on the full ticket history, 
 adjusted automatically depending on whether it is a public reply or an internal note. 
 A similar tickets panel shows up to three resolved tickets with semantically related 
 issues and the actionable steps that fixed them, so agents can apply proven solutions 
@@ -104,6 +95,7 @@ evenly across the team without checking dashboards or asking around.
 - Azure Container Apps — hosts the .NET API, pulls image from Docker Hub on deploy
 - Azure Static Web Apps — hosts the React frontend with global CDN distribution
 - Azure SQL Database — serverless tier with automatic pause/resume
+- Azure Blob Storage — private container for ticket and comment file attachments, accessed via time-limited SAS signed URLs
 - GitHub Actions — automated frontend deployment pipeline, triggers on push to master, injects environment variables from repository secrets during build
 - Backend deployment is currently manual via Docker CLI and Azure CLI
 - UptimeRobot — pings /health endpoint every 5 minutes to prevent Azure SQL auto-pause
@@ -125,7 +117,8 @@ React TypeScript SPA (Azure Static Web Apps)
         |-- JWT Token Service
         |-- Email Service (MailKit/SMTP)
         |-- Current Tenant Service
-         |-- AI Services
+        |-- BlobStorageService (file storage)
+        |-- AI Services
         |       |-- IAICategorizationService   → suggests category + priority as customer types
         |       |-- IAIDraftReplyService       → context-aware reply drafting for agents
         |       |-- IAISimilarTicketService    → RAG-inspired similar ticket search (SQL pre-filters candidates + Claude scores semantically)
@@ -174,6 +167,7 @@ SupportDeskPro/
 │   │   ├── IAISentimentService.cs
 │   │   ├── IAISimilarTicketService.cs
 │   │   ├── IApplicationDbContext.cs
+│   │   ├── IBlobStorageService.cs
 │   │   ├── ICurrentTenantService.cs
 │   │   ├── IEmailService.cs
 │   │   ├── IJwtTokenService.cs
@@ -181,14 +175,14 @@ SupportDeskPro/
 │   └── DependencyInjection.cs          -- Application layer service registration
 │
 ├── SupportDeskPro.Domain/
-│   ├── Entities/                       -- Ticket, User, Tenant, Category, SLAPolicy, etc.
+│   ├── Entities/                       -- Ticket, User, Tenant, Category, SLAPolicy,Attachments etc.
 │   ├── Enums/                          -- TicketStatus, TicketPriority, UserRole, etc.
 │   └── Exceptions/                     -- NotFoundException, BusinessValidationException, etc
 │
 ├── SupportDeskPro.Infrastructure/
 │   ├── Migrations/                     -- EF Core migration history
 │   ├── Persistence/                    -- ApplicationDbContext, entity configurations
-│   └── Services/                       -- EmailService, CurrentTenantService, JwtTokenService, AI related services etc
+│   └── Services/                       -- EmailService, CurrentTenantService, JwtTokenService,  AI related services etc
 │
 └── SupportDeskPro.Contracts/
 │    └── */                             -- Request and response DTOs per feature
@@ -228,11 +222,11 @@ SupportDeskPro/
     │   │   │   └── VerifyEmailPage.tsx      -- Auto-verifies email from link, redirects to login
     │   │   │
     │   │   ├── customer/
-    │   │   │   ├── CreateTicketPage.tsx        -- Ticket creation form with category and priority 
+    │   │   │   ├── CreateTicketPage.tsx        -- Ticket creation form with category and priority,upload/download doc 
     │   │   │   ├── CustomerDashboardPage.tsx   -- Ticket summary cards and recent tickets 
     │   │   │   ├── MyTicketsPage.tsx           -- Customer's own tickets with status filter tabs
     │   │   │   └── TicketDetailPage.tsx        -- Tickets view, conversation, SLA timers, status history,
-                                                   Category and  Priority suggestion, Draft with AI,  
+                                                   Category and  Priority suggestion, Draft with AI, upload/download attachments, 
                                                    Similar past tickets,sentimental suggestion, etc
     │   │   │
     │   │   └── shared/
@@ -291,6 +285,30 @@ Open → In Progress → On Hold → Resolved → Closed. Transitions are valida
 
 ### **Comments and Internal Notes**
 The ticket conversation thread supports two types of messages. Public replies are visible to everyone on the ticket and trigger email notifications to the other party. Internal notes are only visible to agents and admins — the backend filters them out completely from customer-facing responses and they are displayed with an amber background and a lock icon so agents can distinguish them at a glance. The first public comment from an agent or admin automatically sets the SLA first response timestamp, stopping the first response timer. Comment authors can edit their own comments. Admins can delete any comment.
+
+### **File Attachments**
+
+Sometimes a screenshot explains the problem better than words ever could. Customers can 
+attach files when raising a ticket or adding a reply — agents can do the same when 
+responding. The file appears below the message it was attached to, with the name, size, 
+and a download button right there in the conversation thread.
+
+Files are stored in Azure Blob Storage with the container set to private. This means 
+the raw blob URL does nothing — clicking it returns an access denied error. Every 
+download goes through the API first, which validates the request and generates a 
+time-limited signed URL that expires after 24 hours. The file is only accessible to 
+someone who is authenticated and has permission to view that ticket.
+
+A few guardrails are in place on upload. Files larger than 10MB are rejected. Only 
+images, PDFs, Word documents, Excel spreadsheets, and plain text are accepted — nothing 
+executable. If the file uploads to Blob Storage successfully but the database save fails 
+for any reason, the blob is deleted immediately so orphaned files do not accumulate in 
+storage.
+
+Ticket-level attachments uploaded during ticket creation appear in the description card. 
+Comment-level attachments uploaded with a reply appear below that specific message in 
+the conversation thread.
+
 
 ### **AI Features (Claude API)**
 
@@ -442,9 +460,22 @@ Every main table has soft delete (IsDeleted, DeletedAt, DeletedBy) and audit fie
           },
            "AnthropicSettings": {
             "ApiKey": "sk-ant-api03-your-key-here" 
+          },
+          "AzureStorage": {
+            "ConnectionString": "your-connectionstring",
+            "ContainerName": "attachments"
           }
 
-        The base appsettings.json has SMTP and JWT configuration. Update the Gmail app password if you want emails to actually send locally. Get your Anthroic API key from https://console.anthropic.com. 
+
+      **Note:**
+
+        - The base appsettings.json has SMTP and JWT configuration. 
+
+        - Update the Gmail app password if you want emails to actually send locally. 
+
+        - Get your Anthroic API key from https://console.anthropic.com.
+
+        - Create Storage Account in Azure Portal, create container and get the connection string.       
 
 
 3. ***Apply migrations from the API project***
@@ -504,7 +535,9 @@ Every main table has soft delete (IsDeleted, DeletedAt, DeletedBy) and audit fie
       JwtSettings__RefreshTokenExpiryDays      7
       EmailSettings__FrontendUrl               https://your-app.azurestaticapps.net
       AllowedOrigins                           https://your-app.azurestaticapps.net
-      AnthropicSettings__ApiKey                ypur Anthropic API key 
+      AnthropicSettings__ApiKey                your Anthropic API key 
+      AzureStorage__ConnectionString           your Azure Blob Storage connection string
+      AzureStorage__ContainerName              attachments
       ASPNETCORE_ENVIRONMENT                   Production
     ```
 
@@ -590,6 +623,8 @@ Check the Health of App : https://supportdeskpro-api.victoriousdune-73ebad30.wes
 - **GET** `/api/tickets/{id}/sentiment` — AI : Customer sentiment analysis (Frustrated / Concerned / Neutral)
 - **POST** `/api/tickets/{id}/ai-draft-reply` — AI : Generate context-aware reply draft for agent or internal note
 - **POST** `/api/tickets/ai-suggest` — AI : Suggest category and priority as customer types
+- **POST** `/api/{id}/attachments` — Document upload
+- **GET**  `/api/{id}/attachments/{attachmentId}/download` — Document download
 
 ## Users
 - **GET** `/api/users` — Retrieve a list of all users.
@@ -673,7 +708,6 @@ The IsSLABreached flag marks tickets where deadlines have been missed. The backg
 ## **What Is Not Built Yet**
 The core platform is complete and production-ready. 
 A few things still on the list:
--	Ticket file attachments
 -	Reports page with PDF and Excel export
 -	Background job for automatic SLA breach detection
 -	Customer satisfaction ratings after resolution
