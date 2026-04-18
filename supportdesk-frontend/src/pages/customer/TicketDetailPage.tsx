@@ -49,6 +49,8 @@
  *    While waiting, button shows loading state.
  *    Once draft is received, it populates the textarea and shows a success toast.
  *    If API call fails, shows error toast and allows manual typing.
+ * 
+ * 10.File upload - uploading supporting doc along with ticket
  *
  */
 
@@ -93,8 +95,17 @@ interface TicketDetail {
   isSLABreached: boolean;
   firstRespondedAt: string | null;
   resolvedAt: string | null;
+  attachments: TicketAttachment[] | null; //for supporting doc upload
 }
 
+interface TicketAttachment {
+  id: string;
+  originalFileName: string;
+  fileSizeBytes: number;
+  contentType: string;
+  blobUrl: string;
+  createdAt: string;
+}
 interface TicketComment {
   id: string;
   body: string;
@@ -107,10 +118,10 @@ interface TicketComment {
 
 interface CommentAttachment {
   id: string;
-  fileName: string;
-  fileSize: number;
+  originalFileName: string;  
+  fileSizeBytes: number;     
   contentType: string;
-  downloadUrl: string;
+  blobUrl: string;          
 }
 
 interface StatusHistory {
@@ -356,13 +367,15 @@ function StatusChangeDropdown({
 // SUB-COMPONENT: CommentBubble
 // ─────────────────────────────────────────────────────────────────────────────
 
-function CommentBubble({
-  comment, currentUserName,
-}: {
-  comment: TicketComment; currentUserName: string;
-}) {
-  const isOwn = comment.authorName === currentUserName;
-  const isAgent = comment.authorRole === 'Agent' || comment.authorRole === 'Admin';
+  function CommentBubble({
+    comment, currentUserName,
+    onDownload,
+  }: {
+    comment: TicketComment; currentUserName: string;
+    onDownload: (attachmentId: string) => void;
+  }) {
+    const isOwn = comment.authorName === currentUserName;
+    const isAgent = comment.authorRole === 'Agent' || comment.authorRole === 'Admin';
 
   return (
     <div className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>
@@ -398,30 +411,37 @@ function CommentBubble({
           <p className="whitespace-pre-wrap">{comment.body}</p>
         </div>
 
-        {(comment.attachments ?? []).length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-1">
-            {(comment.attachments ?? []).map(att => {
-              const Icon = getFileIcon(att.contentType);
-              return (
-                <div key={att.id}
-                  className="flex items-center gap-2 px-3 py-2 bg-gray-50 border
-                             border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
-                  <Icon size={14} className="text-gray-500 shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-gray-700 truncate max-w-[120px]">
-                      {att.fileName}
-                    </p>
-                    <p className="text-[10px] text-gray-400">{formatFileSize(att.fileSize)}</p>
+          {/*  Attachments (if any) — only render if attachments exist to avoid empty space */}
+          {(comment.attachments ?? []).length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-1">
+              {(comment.attachments ?? []).map(att => {
+                const Icon = getFileIcon(att.contentType);
+                return (
+                  <div key={att.id}
+                    className="flex items-center gap-2 px-3 py-2 bg-gray-50 border
+                              border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
+                    <Icon size={14} className="text-gray-500 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-gray-700 truncate max-w-[120px]">
+                        {att.originalFileName}
+                      </p>
+                      <p className="text-[10px] text-gray-400">
+                        {formatFileSize(att.fileSizeBytes)}
+                      </p>
+                    </div>
+                    {/*  Replace <a> with button — uses SAS signed URL */}
+                    <button
+                      onClick={() => onDownload(att.id)}
+                      className="p-1 rounded hover:bg-gray-200 text-gray-500"
+                    >
+                      <Download size={12} />
+                    </button>
                   </div>
-                  <a href={att.downloadUrl} download
-                    className="p-1 rounded hover:bg-gray-200 text-gray-500">
-                    <Download size={12} />
-                  </a>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                );
+              })}
+            </div>
+          )}
+
       </div>
     </div>
   );
@@ -663,25 +683,38 @@ const TicketDetailPage: React.FC = () => {
   });
 
   // ─── 9. Mutation: add comment ────────────────────────────────────────────
-  const addCommentMutation = useMutation({
-    mutationFn: async (data: CommentFormData) => {
-      return axiosClient.post(`/tickets/${id}/comments`, {
-        body: data.body,
-        isInternal: data.isInternal,
-      });
-    },
-    onSuccess: () => {
-      toast.success('Reply sent');
-      reset();
-      setSelectedFiles([]);
-      refetchComments();
-      refetchTicket();
-    },
-    onError: (error: any) => {
-      const message = error.response?.data?.message || 'Failed to send reply.';
-      toast.error(message);
-    },
-  });
+ const addCommentMutation = useMutation({
+  mutationFn: async (data: CommentFormData) => {
+    return axiosClient.post(`/tickets/${id}/comments`, {
+      body: data.body,
+      isInternal: data.isInternal,
+    });
+  },
+  onSuccess: async (response) => {
+    // Upload attachments to the comment if any selected
+    const commentId = response.data.data;
+    if (selectedFiles.length > 0 && commentId) {
+      for (const file of selectedFiles) {
+        const formData = new FormData();
+        formData.append('file', file);
+        await axiosClient.post(
+          `/tickets/${id}/attachments?commentId=${commentId}`,
+          formData,
+          { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
+      }
+    }
+    toast.success('Reply sent');
+    reset();
+    setSelectedFiles([]);
+    refetchComments();
+    refetchTicket();
+  },
+  onError: (error: any) => {
+    const message = error.response?.data?.message || 'Failed to send reply.';
+    toast.error(message);
+  },
+});
 
   function onSubmit(data: CommentFormData) {
     addCommentMutation.mutate(data);
@@ -715,6 +748,20 @@ async function handleAIDraft() {
     setAiDraftLoading(false);
   }
 }
+
+
+  // ── Download attachment — fetches SAS signed URL and opens file ───
+  async function handleDownload(ticketId: string, attachmentId: string) {
+    try {
+      const response = await axiosClient.get<ApiResponse<string>>(
+        `/tickets/${ticketId}/attachments/${attachmentId}/download`
+      );
+      const sasUrl = response.data.data;
+      if (sasUrl) window.open(sasUrl, '_blank'); // opens file 
+    } catch {
+      toast.error('Failed to download file. Please try again.');
+    }
+  }
 
   // ─── 10. File handlers ───────────────────────────────────────────────────
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -945,147 +992,152 @@ async function handleAIDraft() {
                       key={comment.id}
                       comment={comment}
                       currentUserName={`${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim()}
+                      onDownload={(attachmentId) => handleDownload(ticket.id, attachmentId)}
                     />
                   ))
                 )}
               </div>
             </div>
 
-            {/* Reply box */}
-            {ticket.status !== 'Closed' ? (
-              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                  {isAgentOrAdmin ? 'Reply / Internal Note' : 'Add Reply'}
-                </h2>
+         {/* Reply box */}
+    {ticket.status !== 'Closed' ? (
+      <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+          {isAgentOrAdmin ? 'Reply / Internal Note' : 'Add Reply'}
+        </h2>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-                  {isAgentOrAdmin && (
-                    <label className="flex items-center gap-2 cursor-pointer w-fit">
-                      <div
-                        onClick={() => {
-                              setValue('isInternal', !isInternalValue);
-                              setValue('body', '');  // clear textarea on toggle 
-                            }}
-                        className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${
-                          isInternalValue ? 'bg-amber-400' : 'bg-gray-200'
-                        }`}
-                      >
-                        <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full
-                                         shadow transition-transform ${
-                                           isInternalValue ? 'translate-x-4' : ''
-                                         }`} />
-                      </div>
-                      <span className="text-xs text-gray-600">
-                        {isInternalValue ? '🔒 Internal note (agents only)' : '💬 Visible to customer'}
-                      </span>
-                    </label>
-                  )}
-
-                  <textarea
-                    {...register('body')}
-                    rows={4}
-                    placeholder={
-                      isInternalValue
-                        ? 'Write an internal note (not visible to customer)...'
-                        : 'Write your reply...'
-                    }
-                    className={`w-full px-4 py-3 text-sm border rounded-xl resize-none
-                                focus:outline-none focus:ring-2 transition-colors ${
-                      isInternalValue
-                        ? 'border-amber-200 bg-amber-50 focus:ring-amber-300 placeholder-amber-300'
-                        : 'border-gray-200 bg-gray-50 focus:ring-indigo-300 placeholder-gray-400'
-                    } ${errors.body ? 'border-red-300' : ''}`}
-                  />
-                  {errors.body && (
-                    <p className="text-xs text-red-500">{errors.body.message}</p>
-                  )}
-
-                  {selectedFiles.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {selectedFiles.map((f, i) => (
-                        <div key={i}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50
-                                     border border-indigo-200 rounded-lg">
-                          <Paperclip size={11} className="text-indigo-500" />
-                          <span className="text-xs text-indigo-700 max-w-[140px] truncate">
-                            {f.name}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => removeFile(i)}
-                            className="text-indigo-400 hover:text-indigo-700 text-sm leading-none"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-500
-                                 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <Paperclip size={12} /> Attach files
-                    </button>
-
-                     {/*  AI Draft button — only for Agent/Admin */}
-                      {isAgentOrAdmin && (
-                        <button
-                          type="button"
-                          onClick={handleAIDraft}
-                          disabled={aiDraftLoading}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs
-                                    text-indigo-600 border border-indigo-200 rounded-lg
-                                    hover:bg-indigo-50 transition-colors
-                                    disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {aiDraftLoading
-                            ? <><div className="animate-spin rounded-full h-3 w-3
-                                                border-b-2 border-indigo-500" /> Drafting...</>
-                            : <><Sparkles size={12} /> Draft with AI</>
-                          }
-                        </button>
-                      )}
-
-
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      multiple
-                      accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.xls,.xlsx,.txt"
-                      className="hidden"
-                      onChange={handleFileChange}
-                    />
-
-                    <button
-                      type="submit"
-                      disabled={addCommentMutation.isPending}
-                      className={`flex items-center gap-2 px-5 py-2 text-sm font-medium rounded-xl
-                                  text-white transition-colors disabled:opacity-50
-                                  disabled:cursor-not-allowed ${
-                        isInternalValue
-                          ? 'bg-amber-500 hover:bg-amber-600'
-                          : 'bg-indigo-600 hover:bg-indigo-700'
-                      }`}
-                    >
-                      <Send size={13} />
-                      {addCommentMutation.isPending
-                        ? 'Sending...'
-                        : isInternalValue ? 'Add Note' : 'Send Reply'}
-                    </button>
-                  </div>
-                </form>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+          {isAgentOrAdmin && (
+            <label className="flex items-center gap-2 cursor-pointer w-fit">
+              <div
+                onClick={() => {
+                  setValue('isInternal', !isInternalValue);
+                  setValue('body', '');
+                }}
+                className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${
+                  isInternalValue ? 'bg-amber-400' : 'bg-gray-200'
+                }`}
+              >
+                <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full
+                                shadow transition-transform ${
+                                  isInternalValue ? 'translate-x-4' : ''
+                                }`} />
               </div>
-            ) : (
-              <div className="text-center py-4 text-sm text-gray-400 bg-gray-50
-                              rounded-xl border border-dashed border-gray-200">
-                This ticket is closed. Reopen it to add a reply.
-              </div>
-            )}
+              <span className="text-xs text-gray-600">
+                {isInternalValue ? '🔒 Internal note (agents only)' : '💬 Visible to customer'}
+              </span>
+            </label>
+          )}
+
+          <textarea
+            {...register('body')}
+            rows={4}
+            placeholder={
+              isInternalValue
+                ? 'Write an internal note (not visible to customer)...'
+                : 'Write your reply...'
+            }
+            className={`w-full px-4 py-3 text-sm border rounded-xl resize-none
+                        focus:outline-none focus:ring-2 transition-colors ${
+              isInternalValue
+                ? 'border-amber-200 bg-amber-50 focus:ring-amber-300 placeholder-amber-300'
+                : 'border-gray-200 bg-gray-50 focus:ring-indigo-300 placeholder-gray-400'
+            } ${errors.body ? 'border-red-300' : ''}`}
+          />
+          {errors.body && (
+            <p className="text-xs text-red-500">{errors.body.message}</p>
+          )}
+
+          {/*  Selected files chips — uncommented */}
+          {selectedFiles.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {selectedFiles.map((f, i) => (
+                <div key={i}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50
+                            border border-indigo-200 rounded-lg">
+                  <Paperclip size={11} className="text-indigo-500" />
+                  <span className="text-xs text-indigo-700 max-w-[140px] truncate">
+                    {f.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeFile(i)}
+                    className="text-indigo-400 hover:text-indigo-700 text-sm leading-none"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+      {/*  Bottom row — Attach files, Draft with AI, Send */}
+      <div className="flex items-center justify-between">
+
+        {/* Attach files button — uncommented  */}
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-500
+                     border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <Paperclip size={12} /> Attach files
+        </button>
+
+        {/* AI Draft button — Agent/Admin only */}
+        {isAgentOrAdmin && (
+          <button
+            type="button"
+            onClick={handleAIDraft}
+            disabled={aiDraftLoading}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs
+                       text-indigo-600 border border-indigo-200 rounded-lg
+                       hover:bg-indigo-50 transition-colors
+                       disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {aiDraftLoading
+              ? <><div className="animate-spin rounded-full h-3 w-3
+                                  border-b-2 border-indigo-500" /> Drafting...</>
+              : <><Sparkles size={12} /> Draft with AI</>
+            }
+          </button>
+        )}
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+
+        {/* Send button */}
+        <button
+          type="submit"
+          disabled={addCommentMutation.isPending}
+          className={`flex items-center gap-2 px-5 py-2 text-sm font-medium rounded-xl
+                      text-white transition-colors disabled:opacity-50
+                      disabled:cursor-not-allowed ${
+            isInternalValue
+              ? 'bg-amber-500 hover:bg-amber-600'
+              : 'bg-indigo-600 hover:bg-indigo-700'
+          }`}
+        >
+          <Send size={13} />
+          {addCommentMutation.isPending
+            ? 'Sending...'
+            : isInternalValue ? 'Add Note' : 'Send Reply'}
+        </button>
+      </div>
+    </form>
+  </div>
+) : (
+  <div className="text-center py-4 text-sm text-gray-400 bg-gray-50
+                  rounded-xl border border-dashed border-gray-200">
+    This ticket is closed. Reopen it to add a reply.
+  </div>
+)}
           </div>
 
           {/* ── RIGHT COLUMN (1/3) ── */}

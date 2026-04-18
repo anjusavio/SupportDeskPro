@@ -29,14 +29,14 @@ import { z } from 'zod';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft, Paperclip, Send } from 'lucide-react';
 import Layout from '../../components/common/Layout';
 import { getActiveCategoriesApi } from '../../api/categoryApi';
 import { createTicketApi } from '../../api/ticketApi';
 import { useQueryClient } from '@tanstack/react-query';
 
 //For ai suggestion banner
-import { useState, useEffect } from 'react'; 
+import { useState, useEffect, useRef } from 'react'; 
 import { Sparkles } from 'lucide-react';             
 import axiosClient from '../../api/axiosClient';       
 import { ApiResponse } from '../../types/api.types';  
@@ -148,11 +148,51 @@ useEffect(() => {
   return () => clearTimeout(timeout);
 }, [titleValue, descriptionValue]);
 
+
+    // ── File upload state ─────────────────────────────────────────────
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+      const files = Array.from(e.target.files ?? []);
+      const valid = files.filter(f => f.size <= 10 * 1024 * 1024);
+      if (valid.length < files.length)
+        toast.error('Files larger than 10MB were skipped');
+      setSelectedFiles(prev => [...prev, ...valid]);
+      e.target.value = '';
+    }
+
+    function removeFile(index: number) {
+      setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    }
+
+    // ── Upload files after ticket created ────────────────────────────
+    async function uploadAttachments(ticketId: string) {
+      for (const file of selectedFiles) {
+        const formData = new FormData();
+        formData.append('file', file);
+        await axiosClient.post(
+          `/tickets/${ticketId}/attachments`,
+          formData,
+          { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
+      }
+    }
+
+
+  // ── Mutation: create ticket + upload attachments ──────────────────
   const mutation = useMutation({
     mutationFn: createTicketApi,
-    onSuccess: () => {
-      //refresh my-tickets list after creating new ticket
-      queryClient.invalidateQueries({ queryKey: ['myTickets'] }); 
+    onSuccess: async (response: any) => {
+      const ticketId = response?.data?.data ?? ''; // ticket ID returned from backend
+      
+      // Upload attachments if any selected
+      if (selectedFiles.length > 0) {
+        await uploadAttachments(ticketId);
+      }
+     
+      //refresh my-tickets list after creating new ticket  
+      queryClient.invalidateQueries({ queryKey: ['myTickets'] });
       toast.success('Ticket created successfully!');
       navigate('/my-tickets');
     },
@@ -165,7 +205,7 @@ useEffect(() => {
     },
   });
 
-
+// ── Form submit
   const onSubmit = (data: CreateTicketFormData) => {
     mutation.mutate({
       title: data.title,
@@ -299,6 +339,57 @@ useEffect(() => {
                 </p>
               )}
             </div>
+
+            {/* File attachments */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Attachments <span className="text-gray-400 text-xs">(optional, max 10MB each)</span>
+              </label>
+
+              {/* Selected files list */}
+              {selectedFiles.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {selectedFiles.map((f, i) => (
+                    <div key={i}
+                      className="flex items-center gap-1.5 px-2.5 py-1.5
+                                bg-indigo-50 border border-indigo-200 rounded-lg">
+                      <Paperclip size={11} className="text-indigo-500" />
+                      <span className="text-xs text-indigo-700 max-w-[140px] truncate">
+                        {f.name}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeFile(i)}
+                        className="text-indigo-400 hover:text-indigo-700"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* File input button */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs
+                          text-gray-500 border border-gray-200 rounded-lg
+                          hover:bg-gray-50 transition-colors"
+              >
+                <Paperclip size={12} /> Attach files
+              </button>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+            </div>
+
             
             {/* ── AI Suggestion Banner ── */}
             {aiLoading && (
