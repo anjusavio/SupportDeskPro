@@ -35,7 +35,8 @@ public static class DependencyInjection
         services.AddScoped<IAICategorizationService, AICategorizationService>();
         services.AddScoped<IAIDraftReplyService, AIDraftReplyService>();
         services.AddScoped<IAISimilarTicketService, AISimilarTicketService>();
-        services.AddScoped<IAISentimentService, AISentimentService>(); 
+        services.AddScoped<IAISentimentService, AISentimentService>();
+        services.AddScoped<IBlobStorageService, BlobStorageService>();
 
         // ── JWT AUTHENTICATION ────────────────────────────────
         var jwtSecret = configuration["JwtSettings:Secret"]!;

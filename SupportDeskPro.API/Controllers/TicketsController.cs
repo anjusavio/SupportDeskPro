@@ -5,6 +5,7 @@
 /// Agents view and update tickets assigned to them.
 /// AI draft reply generation for agents to review and edit.
 /// Admins manage all tickets including assignment.
+/// Upload supporting documnents
 /// </summary>
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -16,12 +17,14 @@ using SupportDeskPro.Application.Features.Tickets.AIDraftReply;
 using SupportDeskPro.Application.Features.Tickets.AIGetSimilarTickets;
 using SupportDeskPro.Application.Features.Tickets.AssignTicket;
 using SupportDeskPro.Application.Features.Tickets.CreateTicket;
+using SupportDeskPro.Application.Features.Tickets.GetAttachmentDownloadUrl;
 using SupportDeskPro.Application.Features.Tickets.GetMyTickets;
 using SupportDeskPro.Application.Features.Tickets.GetTicketById;
 using SupportDeskPro.Application.Features.Tickets.GetTicketHistory;
 using SupportDeskPro.Application.Features.Tickets.GetTickets;
 using SupportDeskPro.Application.Features.Tickets.UpdateTicket;
 using SupportDeskPro.Application.Features.Tickets.UpdateTicketStatus;
+using SupportDeskPro.Application.Features.Tickets.UploadAttachment;
 using SupportDeskPro.Application.Interfaces;
 using SupportDeskPro.Contracts.Common;
 using SupportDeskPro.Contracts.Tickets;
@@ -281,5 +284,49 @@ public class TicketsController : ControllerBase
     {
         var result = await _mediator.Send(new AIAnalyseSentimentQuery(id));
         return Ok(ApiResponse<AISentimentAnalysisResponse>.Ok(result));
+    }
+
+
+    /// <summary>
+    /// Uploads a file attachment to a ticket or comment.
+    /// File is stored in Azure Blob Storage.
+    /// Metadata (name, size, URL) saved to TicketAttachments table.
+    /// Max file size: 10MB.
+    /// Allowed types: images, PDF, Word, Excel, plain text.
+    /// </summary>
+    [HttpPost("{id}/attachments")]
+    public async Task<IActionResult> UploadAttachment(Guid id, IFormFile file,
+        [FromQuery] Guid? commentId,
+        [FromServices] ICurrentTenantService tenantService)
+    {
+        var uploadedById = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+        using var stream = file.OpenReadStream();
+
+        var result = await _mediator.Send(
+            new UploadAttachmentCommand(
+                TicketId: id,
+                CommentId: commentId,
+                UploadedById: uploadedById,
+                TenantId: tenantService.TenantId ?? Guid.Empty,
+                FileStream: stream,
+                OriginalFileName: file.FileName,
+                ContentType: file.ContentType,
+                FileSizeBytes: file.Length));
+
+        return Ok(ApiResponse<AttachmentResponse>.Ok(result,"File uploaded successfully."));
+    }
+
+    /// <summary>
+    /// Generates a time-limited SAS signed URL for secure file download.
+    /// Container is private — direct blob URL access is blocked.
+    /// Signed URL expires after 24 hours.
+    /// </summary>
+    [HttpGet("{id}/attachments/{attachmentId}/download")]
+    public async Task<IActionResult> DownloadAttachment(Guid id,Guid attachmentId)
+    {
+        var sasUrl = await _mediator.Send(new GetAttachmentDownloadUrlQuery(id, attachmentId));
+
+        return Ok(ApiResponse<string>.Ok(sasUrl));
     }
 }

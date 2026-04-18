@@ -25,6 +25,14 @@ public record TicketResponse(
     DateTime CreatedAt
 );
 
+public record TicketAttachmentResponse(
+    Guid Id,
+    string OriginalFileName,
+    long FileSizeBytes,
+    string ContentType,
+    string BlobUrl,
+    DateTime CreatedAt);
+
 public record TicketDetailResponse(
     Guid Id,
     int TicketNumber,
@@ -51,7 +59,8 @@ public record TicketDetailResponse(
     string? AISuggestedPriority,
     decimal? AICategorizationConfidence,
     DateTime LastActivityAt,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    List<TicketAttachmentResponse> Attachments
 );
 
 public record TicketStatusHistoryResponse(

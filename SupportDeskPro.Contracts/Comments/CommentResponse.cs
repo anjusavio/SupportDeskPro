@@ -3,6 +3,13 @@
 /// </summary>
 namespace SupportDeskPro.Contracts.Comments;
 
+public record CommentAttachmentResponse(
+    Guid Id,
+    string OriginalFileName,
+    long FileSizeBytes,
+    string ContentType,
+    string BlobUrl);
+
 public record CommentResponse(
     Guid Id,
     Guid TicketId,
@@ -15,5 +22,6 @@ public record CommentResponse(
     DateTime? EditedAt,
     decimal? SentimentScore,
     string? SentimentLabel,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    List<CommentAttachmentResponse> Attachments
 );

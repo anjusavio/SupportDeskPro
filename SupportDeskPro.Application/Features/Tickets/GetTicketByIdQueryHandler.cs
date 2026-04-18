@@ -29,6 +29,8 @@ public class GetTicketByIdQueryHandler
             .Include(t => t.Customer)
             .Include(t => t.AssignedAgent)
             .Include(t => t.AISuggestedCategory)
+            .Include(t => t.Attachments            
+                .Where(a => !a.IsDeleted))
             .FirstOrDefaultAsync(
                 t => t.Id == request.TicketId && !t.IsDeleted,
                 cancellationToken)
@@ -62,6 +64,17 @@ public class GetTicketByIdQueryHandler
             ticket.AISuggestedPriority?.ToString(),
             ticket.AICategorizationConfidence,
             ticket.LastActivityAt,
-            ticket.CreatedAt);
+            ticket.CreatedAt,
+            ticket.Attachments
+            .Where(a => a.CommentId == null) // ticket-level only, not comment attachments
+            .Select(a => new TicketAttachmentResponse(
+                a.Id,
+                a.OriginalFileName,
+                a.FileSizeBytes,
+                a.ContentType,
+                a.BlobUrl,
+                a.CreatedAt))
+            .ToList()
+            );
     }
 }

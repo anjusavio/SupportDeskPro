@@ -37,6 +37,8 @@ public class GetCommentsQueryHandler
         // 2. Build query
         var query = _db.TicketComments
             .Include(c => c.Author)
+            .Include(c => c.Attachments
+              .Where(a => !a.IsDeleted))
             .Where(c => c.TicketId == request.TicketId
                         && !c.IsDeleted)
             .AsQueryable();
@@ -60,7 +62,16 @@ public class GetCommentsQueryHandler
                 c.EditedAt,
                 c.SentimentScore,
                 c.SentimentLabel,
-                c.CreatedAt))
+                c.CreatedAt,
+                c.Attachments                          
+                .Where(a => !a.IsDeleted)
+                .Select(a => new CommentAttachmentResponse(
+                    a.Id,
+                    a.OriginalFileName,
+                    a.FileSizeBytes,
+                    a.ContentType,
+                    a.BlobUrl))
+                .ToList()))
             .ToListAsync(cancellationToken);
     }
 }
