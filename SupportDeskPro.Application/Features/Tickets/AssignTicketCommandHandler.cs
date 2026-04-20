@@ -5,6 +5,8 @@
 /// </summary>
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using SupportDeskPro.Application.Common;
 using SupportDeskPro.Application.Interfaces;
 using SupportDeskPro.Domain.Entities;
 using SupportDeskPro.Domain.Enums;
@@ -16,10 +18,11 @@ public class AssignTicketCommandHandler
     : IRequestHandler<AssignTicketCommand, AssignTicketResult>
 {
     private readonly IApplicationDbContext _db;
-
-    public AssignTicketCommandHandler(IApplicationDbContext db)
+    private readonly IMemoryCache _cache;
+    public AssignTicketCommandHandler(IApplicationDbContext db, IMemoryCache cache)
     {
         _db = db;
+        _cache = cache;
     }
 
     public async Task<AssignTicketResult> Handle(
@@ -88,6 +91,9 @@ public class AssignTicketCommandHandler
         });
 
         await _db.SaveChangesAsync(cancellationToken);
+
+        // Invalidate agents cache — workload count changed
+        _cache.Remove(CacheKeys.Agents(ticket.TenantId)); //  fresh on next assign 
 
         var message = request.AgentId.HasValue
             ? "Ticket assigned successfully."

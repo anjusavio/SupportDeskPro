@@ -4,6 +4,8 @@
 /// </summary>
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using SupportDeskPro.Application.Common;
 using SupportDeskPro.Application.Interfaces;
 using SupportDeskPro.Domain.Entities;
 using SupportDeskPro.Domain.Exceptions;
@@ -14,10 +16,12 @@ public class CreateCategoryCommandHandler
     : IRequestHandler<CreateCategoryCommand, CreateCategoryResult>
 {
     private readonly IApplicationDbContext _db;
+    private readonly IMemoryCache _cache;
 
-    public CreateCategoryCommandHandler(IApplicationDbContext db)
+    public CreateCategoryCommandHandler(IApplicationDbContext db, IMemoryCache cache)
     {
         _db = db;
+        _cache = cache;
     }
 
     public async Task<CreateCategoryResult> Handle(
@@ -58,6 +62,11 @@ public class CreateCategoryCommandHandler
 
         _db.Categories.Add(category);
         await _db.SaveChangesAsync(cancellationToken);
+
+
+        // After saving to DB — invalidate categories cache
+        var cacheKey = CacheKeys.ActiveCategories(request.TenantId);
+        _cache.Remove(cacheKey); // next request fetches fresh from DB
 
         return new CreateCategoryResult(
             true, "Category created successfully.", category.Id);

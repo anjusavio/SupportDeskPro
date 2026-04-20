@@ -4,13 +4,16 @@
 /// 1. Validate category belongs to tenant
 /// 2. Generate unique ticket number using TicketNumberSequences
 /// 3. Find and assign SLA policy based on priority
-/// 4. Calculate SLA due dates
+/// 4. Find SLA policy by priority — loaded from IMemoryCache (1 hour)
+///    to avoid DB query on every ticket creation
 /// 5. Create ticket record
 /// 6. Log initial status history
 /// 7. Update last activity timestamp
 /// </summary>
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using SupportDeskPro.Application.Common;
 using SupportDeskPro.Application.Interfaces;
 using SupportDeskPro.Domain.Entities;
 using SupportDeskPro.Domain.Enums;
@@ -22,10 +25,12 @@ public class CreateTicketCommandHandler
     : IRequestHandler<CreateTicketCommand, CreateTicketResult>
 {
     private readonly IApplicationDbContext _db;
+    private readonly IMemoryCache _cache;
 
-    public CreateTicketCommandHandler(IApplicationDbContext db)
+    public CreateTicketCommandHandler(IApplicationDbContext db,IMemoryCache cache)
     {
         _db = db;
+        _cache = cache;
     }
 
     public async Task<CreateTicketResult> Handle(
@@ -49,12 +54,27 @@ public class CreateTicketCommandHandler
         var ticketNumber = await GenerateTicketNumberAsync(
             request.TenantId, cancellationToken);
 
-        // 4. Find matching SLA policy by priority
+        // 4. Find matching SLA policy by priority — cached 
+        //  SLA policies rarely change — safe to cache for 1 hour
+        //  Avoids DB query on every ticket creation
         var priority = (TicketPriority)request.Priority;
-        var slaPolicy = await _db.SLAPolicies
-            .FirstOrDefaultAsync(
-                s => s.Priority == priority && s.IsActive,
-                cancellationToken);
+       
+        var slaCacheKey = CacheKeys.SLAPolicies(request.TenantId);
+
+        if (!_cache.TryGetValue(slaCacheKey, out List<SLAPolicy>? cachedPolicies))
+        {
+            // Cache miss — load all active SLA policies for this tenant
+            cachedPolicies = await _db.SLAPolicies
+            .Where(s => s.IsActive)
+            .ToListAsync(cancellationToken);
+
+            // Cache for 1 hour
+            _cache.Set(slaCacheKey, cachedPolicies, TimeSpan.FromHours(1));
+        }
+
+        // Find matching policy by priority from cached list
+        var slaPolicy = cachedPolicies!
+            .FirstOrDefault(s => s.Priority == priority);
 
         // 5. Calculate SLA due dates if policy found
         var now = DateTime.UtcNow;

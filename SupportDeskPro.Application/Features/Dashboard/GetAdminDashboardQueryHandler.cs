@@ -6,6 +6,8 @@
 /// </summary>
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using SupportDeskPro.Application.Common;
 using SupportDeskPro.Application.Interfaces;
 using SupportDeskPro.Contracts.Dashboard;
 using SupportDeskPro.Domain.Enums;
@@ -16,16 +18,30 @@ public class GetAdminDashboardQueryHandler
     : IRequestHandler<GetAdminDashboardQuery, AdminDashboardResponse>
 {
     private readonly IApplicationDbContext _db;
+    private readonly IMemoryCache _cache;
+    private readonly ICurrentTenantService _currentTenant;
 
-    public GetAdminDashboardQueryHandler(IApplicationDbContext db)
+    public GetAdminDashboardQueryHandler(
+        IApplicationDbContext db,
+        IMemoryCache cache,
+        ICurrentTenantService currentTenant)
     {
         _db = db;
+        _cache = cache;
+        _currentTenant = currentTenant;
     }
 
     public async Task<AdminDashboardResponse> Handle(
         GetAdminDashboardQuery request,
         CancellationToken cancellationToken)
     {
+        //cache dashboard data for 5 minutes — expensive to calculate on every page load
+        var tenantId = _currentTenant.TenantId ?? Guid.Empty;
+        var cacheKey = CacheKeys.AdminDashboard(tenantId);
+
+        if (_cache.TryGetValue(cacheKey, out AdminDashboardResponse? cached))
+            return cached!;
+
         var now = DateTime.UtcNow;
         var todayStart = now.Date;
         var todayEnd = todayStart.AddDays(1);
@@ -150,7 +166,7 @@ public class GetAdminDashboardQueryHandler
                 g.Count()))
             .ToList();
 
-        return new AdminDashboardResponse(
+        var response = new AdminDashboardResponse(
             totalTickets,
             openTickets,
             inProgressTickets,
@@ -164,5 +180,10 @@ public class GetAdminDashboardQueryHandler
             ticketsByCategory,
             ticketsByAgent,
             ticketsByPriority);
+
+        // Cache for 5 minutes
+        _cache.Set(cacheKey, response, TimeSpan.FromMinutes(5));
+
+        return response;
     }
 }

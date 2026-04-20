@@ -1,5 +1,7 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using SupportDeskPro.Application.Common;
 using SupportDeskPro.Application.Interfaces;
 using SupportDeskPro.Contracts.Tickets;
 using SupportDeskPro.Domain.Enums;
@@ -29,19 +31,28 @@ public class AIGetSimilarTicketsQueryHandler
 {
     private readonly IApplicationDbContext _db;
     private readonly IAISimilarTicketService _aiSimilarService;
-
+    private readonly IMemoryCache _cache;
     public AIGetSimilarTicketsQueryHandler(
         IApplicationDbContext db,
-        IAISimilarTicketService aiSimilarService)
+        IAISimilarTicketService aiSimilarService,IMemoryCache cache)
     {
         _db = db;
         _aiSimilarService = aiSimilarService;
+        _cache = cache;
     }
 
     public async Task<List<AISimilarTicketResponse>> Handle(
         AIGetSimilarTicketsQuery request,
         CancellationToken cancellationToken)
     {
+
+        var cacheKey = CacheKeys.SimilarTickets(request.TicketId);
+
+        // Return cached result — saves Claude API call 
+        if (_cache.TryGetValue(cacheKey,out List<AISimilarTicketResponse>? cached))
+            return cached!;
+
+
         // Load current ticket 
         var ticket = await _db.Tickets
             .FirstOrDefaultAsync(
@@ -136,6 +147,9 @@ public class AIGetSimilarTicketsQueryHandler
                 ai.SimilarityScore,
                 t.ResolvedAt ?? DateTime.UtcNow));
         }
+
+        // Cache result for 1 hour
+        _cache.Set(cacheKey, result, TimeSpan.FromHours(1));
 
         return result;
     }

@@ -27,6 +27,7 @@ try
     Log.Information("Starting SupportDeskPro API...");
 
     var builder = WebApplication.CreateBuilder(args);
+    builder.Services.AddMemoryCache();
 
     // ── SERILOG FULL CONFIGURATION ────────────────────────────
     builder.Host.UseSerilog((context, services, configuration) =>

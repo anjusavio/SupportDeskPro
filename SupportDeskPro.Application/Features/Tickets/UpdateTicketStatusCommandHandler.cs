@@ -6,6 +6,8 @@
 /// </summary>
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using SupportDeskPro.Application.Common;
 using SupportDeskPro.Application.Interfaces;
 using SupportDeskPro.Domain.Entities;
 using SupportDeskPro.Domain.Enums;
@@ -17,10 +19,11 @@ public class UpdateTicketStatusCommandHandler
     : IRequestHandler<UpdateTicketStatusCommand, UpdateTicketStatusResult>
 {
     private readonly IApplicationDbContext _db;
-
-    public UpdateTicketStatusCommandHandler(IApplicationDbContext db)
+    private readonly IMemoryCache _cache;
+    public UpdateTicketStatusCommandHandler(IApplicationDbContext db, IMemoryCache cache)
     {
         _db = db;
+        _cache = cache;
     }
 
     public async Task<UpdateTicketStatusResult> Handle(
@@ -78,6 +81,14 @@ public class UpdateTicketStatusCommandHandler
 
         _db.TicketStatusHistory.Add(history);
         await _db.SaveChangesAsync(cancellationToken);
+
+
+        // Invalidate dashboard — ticket count changed
+        _cache.Remove(CacheKeys.AdminDashboard(ticket.TenantId));
+
+        // Also invalidate agent dashboard if assigned
+        if (ticket.AssignedAgentId.HasValue)
+            _cache.Remove(CacheKeys.AgentDashboard(ticket.AssignedAgentId.Value));
 
         return new UpdateTicketStatusResult(
             true, $"Ticket status updated to {newStatus} successfully.");

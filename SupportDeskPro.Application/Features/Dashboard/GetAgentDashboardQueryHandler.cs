@@ -5,6 +5,8 @@
 /// </summary>
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using SupportDeskPro.Application.Common;
 using SupportDeskPro.Application.Interfaces;
 using SupportDeskPro.Contracts.Dashboard;
 using SupportDeskPro.Domain.Entities;
@@ -16,10 +18,16 @@ public class GetAgentDashboardQueryHandler
     : IRequestHandler<GetAgentDashboardQuery, AgentDashboardResponse>
 {
     private readonly IApplicationDbContext _db;
+    private readonly IMemoryCache _cache;
+    private readonly ICurrentTenantService _currentTenant;
 
-    public GetAgentDashboardQueryHandler(IApplicationDbContext db)
+    public GetAgentDashboardQueryHandler(IApplicationDbContext db,
+        IMemoryCache cache,
+        ICurrentTenantService currentTenant)
     {
         _db = db;
+        _cache = cache;
+        _currentTenant = currentTenant;
     }
 
     //Agent Dashboard:
@@ -32,6 +40,12 @@ public class GetAgentDashboardQueryHandler
         GetAgentDashboardQuery request,
         CancellationToken cancellationToken)
     {
+        //cache dashboard data for 5 minutes — expensive to calculate on every page load
+        var cacheKey = CacheKeys.AgentDashboard(request.AgentId);
+
+        if (_cache.TryGetValue(cacheKey, out AgentDashboardResponse? cached))
+            return cached!;
+
         var now = DateTime.UtcNow;
         var todayStart = now.Date;
         var todayEnd = todayStart.AddDays(1);
@@ -91,7 +105,7 @@ public class GetAgentDashboardQueryHandler
                 t.CreatedAt))
             .ToListAsync(cancellationToken);
 
-        return new AgentDashboardResponse(
+        var response = new AgentDashboardResponse(
             myTotalAssigned,
             myOpenTickets,
             myInProgressTickets,
@@ -100,5 +114,9 @@ public class GetAgentDashboardQueryHandler
             mySLAPendingCount,
             Math.Round(myAvgResolutionHours, 1),
             myRecentTickets);
+
+        // Cache for 5 minutes
+        _cache.Set(cacheKey, response, TimeSpan.FromMinutes(5));
+        return response;
     }
 }
