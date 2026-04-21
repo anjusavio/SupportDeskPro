@@ -36,7 +36,8 @@ import {
   X,
   Tag,
   Clock,
-  Lock
+  Lock,
+  Building2,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import axiosClient from '../../api/axiosClient';
@@ -127,6 +128,16 @@ const Navbar: React.FC = () => {
                * Concept: Conditional rendering with && operator.
                * condition && <Component/> → renders only if condition true
                */}
+
+              {/* SuperAdmin only */}
+              {user?.role === 'SuperAdmin' && (
+                <Link to="/superadmin/tenants" className={navLinkClass('/superadmin/tenants')}>
+                  <Building2 size={16} />
+                  Tenants
+                </Link>
+              )
+              }
+              
 
               {/* Admin only */}
               {user?.role === 'Admin' && (

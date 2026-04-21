@@ -37,6 +37,9 @@ import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import ChangePasswordPage from './pages/auth/ChangePasswordPage';
 
+//Superadmin pages
+import TenantsPage from './pages/superadmin/TenantsPage';
+
 // Admin pages
 import AdminDashboardPage from './pages/admin/DashboardPage';
 import TicketsPage from './pages/admin/TicketsPage';
@@ -123,6 +126,15 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password"  element={<ResetPasswordPage />} />
           <Route path="/change-password" element={<ChangePasswordPage />} />
+
+          {/* superadmin routes */}
+          <Route path="/superadmin/tenants"
+              element={
+                <ProtectedRoute allowedRoles={['SuperAdmin']}>
+                  <TenantsPage />
+                </ProtectedRoute>
+              }
+            />
 
           {/* Admin routes */}
           <Route path="/dashboard" element={
