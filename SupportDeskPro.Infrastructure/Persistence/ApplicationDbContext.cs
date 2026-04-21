@@ -65,34 +65,34 @@ namespace SupportDeskPro.Infrastructure.Persistence
 
             modelBuilder.Entity<Ticket>()
                 .HasQueryFilter(t =>_tenantService.IsSuperAdmin ||
-                                t.TenantId == _tenantService.TenantId &&
-                                !t.IsDeleted);
+                (t.TenantId == null || t.TenantId == _tenantService.TenantId) &&
+                     !t.IsDeleted);
 
             modelBuilder.Entity<TicketComment>()
                 .HasQueryFilter(c =>_tenantService.IsSuperAdmin ||
-                c.TenantId == _tenantService.TenantId &&
+                (c.TenantId == null || c.TenantId == _tenantService.TenantId) &&
                 !c.IsDeleted);
 
             modelBuilder.Entity<TicketAttachment>()
                 .HasQueryFilter(a =>_tenantService.IsSuperAdmin ||
-                a.TenantId == _tenantService.TenantId &&
+                (a.TenantId == null || a.TenantId == _tenantService.TenantId) &&
                 !a.IsDeleted);
 
             modelBuilder.Entity<Category>()
                 .HasQueryFilter(c => _tenantService.IsSuperAdmin ||
-                c.TenantId == _tenantService.TenantId);
+                (c.TenantId == null || c.TenantId == _tenantService.TenantId));
 
             modelBuilder.Entity<SLAPolicy>()
                 .HasQueryFilter(s =>_tenantService.IsSuperAdmin ||
-                s.TenantId == _tenantService.TenantId);
+                (s.TenantId == null || s.TenantId == _tenantService.TenantId));
 
             modelBuilder.Entity<Notification>()
                 .HasQueryFilter(n =>_tenantService.IsSuperAdmin ||
-                n.TenantId == _tenantService.TenantId);
+                (n.TenantId == null || n.TenantId == _tenantService.TenantId));
 
             modelBuilder.Entity<TenantSettings>()
                 .HasQueryFilter(ts =>_tenantService.IsSuperAdmin ||
-                ts.TenantId == _tenantService.TenantId);
+                (ts.TenantId == null || ts.TenantId == _tenantService.TenantId));
 
             modelBuilder.Entity<TicketNumberSequence>(b =>
             {
@@ -110,19 +110,19 @@ namespace SupportDeskPro.Infrastructure.Persistence
 
             modelBuilder.Entity<RefreshToken>()
                 .HasQueryFilter(r => _tenantService.IsSuperAdmin ||
-                r.User.TenantId == _tenantService.TenantId);
+                (r.User.TenantId == null || r.User.TenantId == _tenantService.TenantId));
 
             modelBuilder.Entity<PasswordResetToken>()
                 .HasQueryFilter(r =>_tenantService.IsSuperAdmin ||
-                r.User.TenantId == _tenantService.TenantId);
+                (r.User.TenantId == null || r.User.TenantId == _tenantService.TenantId));
 
             modelBuilder.Entity<TicketStatusHistory>()
                 .HasQueryFilter(t => _tenantService.IsSuperAdmin ||
-                t.TenantId == _tenantService.TenantId);
+                 (t.TenantId == null || t.TenantId == _tenantService.TenantId));
 
             modelBuilder.Entity<TicketAssignmentHistory>()
                 .HasQueryFilter(t => _tenantService.IsSuperAdmin ||
-                t.TenantId == _tenantService.TenantId);
+                 (t.TenantId == null || t.TenantId == _tenantService.TenantId));
         }
 
         // ── AUTO UPDATE TIMESTAMPS ────────────────────────────────

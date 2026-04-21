@@ -6,9 +6,10 @@ namespace SupportDeskPro.Application.Features.Tenants.UpdateTenant;
 public record UpdateTenantCommand(
     Guid TenantId,
     string Name,
-    int PlanType,
+    string PlanType,
     int MaxAgents,
-    int MaxTickets
+    int MaxTickets,
+    bool IsActive
 ) : IRequest<UpdateTenantResult>;
 
 public record UpdateTenantResult(

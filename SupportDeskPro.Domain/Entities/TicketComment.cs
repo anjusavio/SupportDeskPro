@@ -14,10 +14,6 @@
         public decimal? SentimentScore { get; set; }    // -1.0 to +1.0
         public string? SentimentLabel { get; set; }     // Positive, Neutral, Negative
 
-        // Soft delete
-        public bool IsDeleted { get; set; } = false;
-        public DateTime? DeletedAt { get; set; }
-        public Guid? DeletedBy { get; set; }
 
         // Navigation properties - define relationships between tables.
         public Tenant Tenant { get; set; } = null!;

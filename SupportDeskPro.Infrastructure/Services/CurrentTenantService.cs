@@ -21,7 +21,9 @@ public class CurrentTenantService : ICurrentTenantService
         get
         {
             var tenantIdClaim = User?.FindFirst("TenantId")?.Value;
-            return tenantIdClaim != null ? Guid.Parse(tenantIdClaim) : null;
+
+            return Guid.TryParse(tenantIdClaim, out var tenantId) ? tenantId : null; // null = SuperAdmin 
+
         }
     }
 

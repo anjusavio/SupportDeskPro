@@ -23,7 +23,7 @@ public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, C
     {
         // 1. Check slug is unique
         var slugExists = await _db.Tenants
-            .AnyAsync(t => t.Slug == request.Slug.ToLower(),
+            .AnyAsync(t => t.Slug == request.Slug.ToLower() && !t.IsDeleted,
                 cancellationToken);
 
         if (slugExists)
@@ -35,7 +35,7 @@ public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, C
         {
             Name = request.Name.Trim(),
             Slug = request.Slug.ToLower().Trim(),
-            PlanType = (PlanType)request.PlanType,
+            PlanType = Enum.Parse<PlanType>(request.PlanType),
             MaxAgents = request.MaxAgents,
             MaxTickets = request.MaxTickets,
             IsActive = true

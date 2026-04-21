@@ -16,9 +16,9 @@ namespace SupportDeskPro.Domain.Entities
         public DateTime? LastLoginAt { get; set; }
         public string? LastLoginIp { get; set; }
         public string? ProfilePictureUrl { get; set; }
-        public bool IsDeleted { get; set; } = false;
-        public DateTime? DeletedAt { get; set; }
-        public Guid? DeletedBy { get; set; }
+        public new bool IsDeleted { get; set; } = false;
+        public new DateTime? DeletedAt { get; set; }
+        public new Guid? DeletedBy { get; set; }
 
         // Computed property — not stored in DB
         public string FullName => $"{FirstName} {LastName}";

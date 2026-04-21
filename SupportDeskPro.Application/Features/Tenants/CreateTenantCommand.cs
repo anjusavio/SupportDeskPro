@@ -7,7 +7,7 @@ namespace SupportDeskPro.Application.Features.Tenants.CreateTenant;
 public record CreateTenantCommand(
     string Name,
     string Slug,
-    int PlanType,
+    string PlanType,
     int MaxAgents,
     int MaxTickets
 ) : IRequest<CreateTenantResult>;

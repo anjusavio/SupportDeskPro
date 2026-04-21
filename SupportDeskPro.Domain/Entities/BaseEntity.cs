@@ -8,8 +8,14 @@
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-        public Guid? CreatedBy { get; set; } // nullable ← can be null for system actions like Background job/sent email, etc.
+        public Guid? CreatedBy { get; set; } // nullable - can be null for system actions like Background job/sent email, etc.
         public Guid? UpdatedBy { get; set; }
+
+
+        // Soft delete
+        public bool IsDeleted { get; set; } = false;
+        public DateTime? DeletedAt { get; set; }
+        public Guid? DeletedBy { get; set; }
 
     }
 }

@@ -40,9 +40,9 @@ namespace SupportDeskPro.Domain.Entities
         public DateTime LastActivityAt { get; set; } = DateTime.UtcNow;
 
         // Soft delete
-        public bool IsDeleted { get; set; } = false;
-        public DateTime? DeletedAt { get; set; }
-        public Guid? DeletedBy { get; set; }
+        public new bool IsDeleted { get; set; } = false;
+        public new DateTime? DeletedAt { get; set; }
+        public new Guid? DeletedBy { get; set; }
 
         // Navigation properties - define relationships between tables.
         public Tenant Tenant { get; set; } = null!;

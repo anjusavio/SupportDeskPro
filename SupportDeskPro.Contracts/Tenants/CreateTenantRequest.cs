@@ -4,7 +4,7 @@
 public record CreateTenantRequest(
     string Name,
     string Slug,
-    int PlanType,
+    string PlanType,
     int MaxAgents,
     int MaxTickets
 );

@@ -8,7 +8,8 @@ namespace SupportDeskPro.Application.Features.Tenants.GetTenants;
 public record GetTenantsQuery(
     int Page = 1,
     int PageSize = 20,
-    bool? IsActive = null
+    bool? IsActive = null,
+    string? Search = null
 ) : IRequest<PagedResult<TenantResponse>>;
 
 public record PagedResult<T>(

@@ -5,6 +5,7 @@ using SupportDeskPro.Application.Interfaces;
 using SupportDeskPro.Domain.Enums;
 using SupportDeskPro.Domain.Exceptions;
 
+
 namespace SupportDeskPro.Application.Features.Tenants.UpdateTenant;
 
 public class UpdateTenantCommandHandler
@@ -31,7 +32,8 @@ public class UpdateTenantCommandHandler
             throw new NotFoundException("Tenant", request.TenantId);
 
         tenant.Name = request.Name.Trim();
-        tenant.PlanType = (PlanType)request.PlanType;
+        tenant.PlanType = Enum.Parse<PlanType>(request.PlanType);
+        tenant.IsActive = request.IsActive;
         tenant.MaxAgents = request.MaxAgents;
         tenant.MaxTickets = request.MaxTickets;
 

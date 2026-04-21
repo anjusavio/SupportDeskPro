@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SupportDeskPro.Application.Features.Tenants.CreateTenant;
+using SupportDeskPro.Application.Features.Tenants.DeleteTenant;
 using SupportDeskPro.Application.Features.Tenants.GetMyTenant;
 using SupportDeskPro.Application.Features.Tenants.GetTenantById;
 using SupportDeskPro.Application.Features.Tenants.GetTenants;
@@ -39,9 +40,10 @@ public class TenantsController : ControllerBase
     public async Task<IActionResult> GetAll(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
-        [FromQuery] bool? isActive = null)
+        [FromQuery] bool? isActive = null,
+         [FromQuery] string? search = null)
     {
-        var result = await _mediator.Send(new GetTenantsQuery(page, pageSize, isActive));
+        var result = await _mediator.Send(new GetTenantsQuery(page, pageSize,  isActive, search));
         return Ok(ApiResponse<PagedResult<TenantResponse>>.Ok(result));
     }
 
@@ -106,9 +108,20 @@ public class TenantsController : ControllerBase
                 request.Name,
                 request.PlanType,
                 request.MaxAgents,
-                request.MaxTickets));
+                request.MaxTickets,
+                request.IsActive
+                ));
 
         return Ok(ApiResponse<string>.Ok( result.Message, result.Message));
+    }
+
+    // DELETE /api/tenants/{id} (SuperAdmin only)
+    [HttpDelete("{id}")]
+    [Authorize(Roles = "SuperAdmin")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var result = await _mediator.Send(new DeleteTenantCommand(id));
+        return Ok(ApiResponse<string>.Ok(result.Message));
     }
 
     // PUT /api/tenants/my/settings (Admin only)
@@ -131,4 +144,5 @@ public class TenantsController : ControllerBase
 
         return Ok(ApiResponse<string>.Ok(result.Message, result.Message));
     }
+
 }

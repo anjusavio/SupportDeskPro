@@ -3,7 +3,8 @@
 // Request model for updating tenant name, plan, and limits
 public record UpdateTenantRequest(
     string Name,
-    int PlanType,
+    string PlanType,
     int MaxAgents,
-    int MaxTickets
+    int MaxTickets,
+    bool IsActive
 );

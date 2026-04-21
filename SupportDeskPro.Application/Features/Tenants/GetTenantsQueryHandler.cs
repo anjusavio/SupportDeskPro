@@ -19,11 +19,21 @@ public class GetTenantsQueryHandler : IRequestHandler<GetTenantsQuery, PagedResu
         GetTenantsQuery request,
         CancellationToken cancellationToken)
     {
-        var query = _db.Tenants.AsQueryable();
+        
+        var query = _db.Tenants.Where(t => !t.IsDeleted).AsQueryable();
 
         // Filter by status if provided
         if (request.IsActive.HasValue)
             query = query.Where(t => t.IsActive == request.IsActive);
+
+     //search filter
+        if (!string.IsNullOrWhiteSpace(request.Search))
+        {
+            var search = request.Search.ToLower();
+            query = query.Where(t =>
+                t.Name.ToLower().Contains(search) ||
+                t.Slug.ToLower().Contains(search));
+        }
 
         var totalCount = await query.CountAsync(cancellationToken);
 

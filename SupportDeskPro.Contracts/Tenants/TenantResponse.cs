@@ -33,3 +33,6 @@ public record TenantDetailResponse(
     DateTime CreatedAt,
     TenantSettingsResponse? Settings
 );
+
+
+

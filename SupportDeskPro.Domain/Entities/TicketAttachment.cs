@@ -12,10 +12,6 @@
         public long FileSizeBytes { get; set; }
         public string ContentType { get; set; } = string.Empty;
 
-        // Soft delete
-        public bool IsDeleted { get; set; } = false;
-        public DateTime? DeletedAt { get; set; }
-        public Guid? DeletedBy { get; set; }
 
         // Navigation properties - define relationships between tables.
         public Tenant Tenant { get; set; } = null!;
