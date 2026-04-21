@@ -395,6 +395,34 @@ The **Agent dashboard** shows their personal queue — open tickets, SLA status 
 
 The **Customer dashboard** shows a summary of their own tickets — total raised, open, resolved, and any SLA breaches. Quick action buttons let them raise a new ticket or jump straight to their ticket list. The Resolved card navigates directly to a filtered view showing only resolved tickets.
 
+
+### **Caching**
+
+Every time a customer opens the ticket creation form, the app needs the list of active 
+categories. Every time a ticket is created, it needs to look up the SLA policy for that 
+priority. Every time an admin opens a ticket to assign it, it needs the full agent list 
+with workload counts. These are the same queries running hundreds of times a day 
+returning data that almost never changes.
+
+In-memory caching using .NET IMemoryCache eliminates the redundant database hits. 
+Active categories and SLA policies are cached for one hour per tenant — they change 
+so rarely that stale data is not a real concern, and on the rare occasion an admin 
+updates a category or policy, the cache is invalidated immediately so the next request 
+fetches fresh data. The agent list is cached for five minutes since workload counts 
+shift throughout the day as tickets are assigned and resolved. Dashboard statistics 
+follow the same five minute window — fresh enough to be useful, short enough that an 
+admin refreshing the page does not hammer the database with expensive aggregation queries.
+
+The similar ticket AI search results are cached for one hour per ticket. Claude API 
+calls cost money and take time — if two agents open the same ticket within the hour, 
+the second one gets the result instantly from memory rather than triggering a second 
+API call.
+
+All cache keys are scoped by tenant ID so one company's cached data can never 
+accidentally be served to another tenant. In a multi-server production environment 
+the natural next step would be replacing IMemoryCache with Redis for distributed 
+caching — the invalidation logic and key structure would stay exactly the same.
+
 ---
 
 ## **Database – Azure SQL Database**
