@@ -53,6 +53,11 @@ try
                 "[{ThreadId}] " +
                 "{Message:lj}" +
                 "{NewLine}{Exception}")
+            //adding to applictaion insight
+            .WriteTo.ApplicationInsights(
+            context.Configuration["ApplicationInsights:ConnectionString"],
+            TelemetryConverter.Traces)
+
     );
 
     // ── SERVICES ──────────────────────────────────────────────
