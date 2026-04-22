@@ -63,7 +63,7 @@ evenly across the team without checking dashboards or asking around.
 - BCrypt — password hashing via a custom IPasswordHasher interface
 - FluentValidation — request validation runs in a MediatR pipeline behavior before any handler executes
 - MailKit — SMTP email via Gmail App Passwords
-- Serilog — structured logging with daily rolling files and console sink
+- Serilog — structured logging with daily rolling files and console sink and Azure Application Insights sink for centralised production monitoring
 - Global Exception Middleware — consistent error responses across all endpoints
 - ICurrentTenantService — resolves TenantId, UserId and Role from JWT claims on every request
 
@@ -96,6 +96,7 @@ evenly across the team without checking dashboards or asking around.
 - Azure Static Web Apps — hosts the React frontend with global CDN distribution
 - Azure SQL Database — serverless tier with automatic pause/resume
 - Azure Blob Storage — private container for ticket and comment file attachments, accessed via time-limited SAS signed URLs
+- Azure Application Insights — centralised log monitoring, all Serilog entries forwarded in production alongside console and file sinks
 - GitHub Actions — automated frontend deployment pipeline, triggers on push to master, injects environment variables from repository secrets during build
 - Backend deployment is currently manual via Docker CLI and Azure CLI
 - UptimeRobot — pings /health endpoint every 5 minutes to prevent Azure SQL auto-pause
