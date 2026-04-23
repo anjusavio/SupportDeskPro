@@ -29,6 +29,7 @@ using SupportDeskPro.Application.Interfaces;
 using SupportDeskPro.Contracts.Common;
 using SupportDeskPro.Contracts.Tickets;
 using System.Security.Claims;
+using Microsoft.AspNetCore.RateLimiting; // AI endpoints — 10 per minute per user (Claude API cost control)
 
 namespace SupportDeskPro.API.Controllers;
 
@@ -236,6 +237,7 @@ public class TicketsController : ControllerBase
     // POST /api/tickets/ai-suggest
     [HttpPost("ai-suggest")]
     [Authorize(Roles = "Customer")]
+    [EnableRateLimiting("ai")]
     public async Task<IActionResult> AISuggest([FromBody] AISuggestRequest request)
     {
         var result = await _mediator.Send(new AISuggestQuery(request.Title, request.Description));
@@ -250,6 +252,7 @@ public class TicketsController : ControllerBase
     /// </summary>
     [HttpPost("{id}/ai-draft-reply")]
     [Authorize(Roles = "Admin,Agent")]
+    [EnableRateLimiting("ai")]
     public async Task<IActionResult> AIDraftReply(Guid id,[FromBody] AIDraftReplyRequest request)
     {
         var result = await _mediator.Send(new AIDraftReplyQuery(id, request.IsInternal));
@@ -265,6 +268,7 @@ public class TicketsController : ControllerBase
     /// </summary>
     [HttpGet("{id}/similar")]
     [Authorize(Roles = "Admin,Agent")]
+    [EnableRateLimiting("ai")]
     public async Task<IActionResult> GetSimilarTickets(Guid id)
     {
         var result = await _mediator.Send(new AIGetSimilarTicketsQuery(id));
@@ -280,6 +284,7 @@ public class TicketsController : ControllerBase
     /// </summary>
     [HttpGet("{id}/sentiment")]
     [Authorize(Roles = "Admin,Agent")]
+    [EnableRateLimiting("ai")]
     public async Task<IActionResult> AnalyseSentiment(Guid id)
     {
         var result = await _mediator.Send(new AIAnalyseSentimentQuery(id));
@@ -295,6 +300,7 @@ public class TicketsController : ControllerBase
     /// Allowed types: images, PDF, Word, Excel, plain text.
     /// </summary>
     [HttpPost("{id}/attachments")]
+    [EnableRateLimiting("ai")]
     public async Task<IActionResult> UploadAttachment(Guid id, IFormFile file,
         [FromQuery] Guid? commentId,
         [FromServices] ICurrentTenantService tenantService)
@@ -323,6 +329,7 @@ public class TicketsController : ControllerBase
     /// Signed URL expires after 24 hours.
     /// </summary>
     [HttpGet("{id}/attachments/{attachmentId}/download")]
+    [EnableRateLimiting("ai")]
     public async Task<IActionResult> DownloadAttachment(Guid id,Guid attachmentId)
     {
         var sasUrl = await _mediator.Send(new GetAttachmentDownloadUrlQuery(id, attachmentId));

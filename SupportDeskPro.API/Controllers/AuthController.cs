@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using SupportDeskPro.Application.Features.Auth.ChangePassword;
 using SupportDeskPro.Application.Features.Auth.ForgotPassword;
 using SupportDeskPro.Application.Features.Auth.Login;
@@ -9,7 +10,6 @@ using SupportDeskPro.Application.Features.Auth.ResetPassword;
 using SupportDeskPro.Application.Features.Auth.VerifyEmail;
 using SupportDeskPro.Contracts.Auth;
 using SupportDeskPro.Contracts.Common;
-using SupportDeskPro.Domain.Entities;
 
 namespace SupportDeskPro.API.Controllers;
 
@@ -38,6 +38,7 @@ public class AuthController : ControllerBase
     /// </summary>
     // POST /api/auth/register
     [HttpPost("register")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
         var command = new RegisterCommand(
@@ -66,6 +67,7 @@ public class AuthController : ControllerBase
     /// </summary>
     // POST /api/auth/login
     [HttpPost("login")]
+    [EnableRateLimiting("auth")] // Brute force protection — 5 attempts per minute per IP
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         var query = new LoginQuery(request.Email, request.Password);
@@ -125,6 +127,7 @@ public class AuthController : ControllerBase
     /// </summary>
     // POST /api/auth/forgot-password
     [HttpPost("forgot-password")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
         var result = await _mediator.Send(new ForgotPasswordCommand(request.Email));
@@ -137,6 +140,7 @@ public class AuthController : ControllerBase
     /// Returns 400 if token is invalid or expired.
     /// </summary>
     [HttpPost("reset-password")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> ResetPassword(
         [FromBody] ResetPasswordRequest request)
     {

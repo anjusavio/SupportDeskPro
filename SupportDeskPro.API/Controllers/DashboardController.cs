@@ -14,6 +14,7 @@ using SupportDeskPro.Domain.Entities;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Security.Claims;
+using Microsoft.AspNetCore.RateLimiting; // Heavy DB queries — 30 per minute per user
 
 namespace SupportDeskPro.API.Controllers;
 
@@ -38,6 +39,7 @@ public class DashboardController : ControllerBase
     /// </summary>
     [HttpGet("admin")]
     [Authorize(Roles = "Admin")]
+    [EnableRateLimiting("heavy")]
     public async Task<IActionResult> GetAdminDashboard()
     {
         var result = await _mediator.Send(new GetAdminDashboardQuery());
@@ -52,6 +54,7 @@ public class DashboardController : ControllerBase
     /// </summary>
     [HttpGet("agent")]
     [Authorize(Roles = "Agent")]
+    [EnableRateLimiting("heavy")]
     public async Task<IActionResult> GetAgentDashboard()
     {
         var agentId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
