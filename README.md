@@ -26,7 +26,7 @@ resolution steps, and detecting customer sentiment before the agent writes a sin
 
 ### **How It Works**
 
-There are three user roles, each with a distinct experience.
+There are four user roles, each with a distinct experience.
 
 **Customers** register under their company's tenant using a slug that identifies which 
 organisation they belong to. They raise tickets when they need help, communicate with 
@@ -47,6 +47,13 @@ are also available to admins when they open a ticket directly. When assigning a 
 the agent dropdown is sorted by current open ticket count — the agent with the least 
 active tickets appears at the top with a star, making it easy to distribute workload 
 evenly across the team without checking dashboards or asking around.
+
+**SuperAdmin** operates above every tenant with complete platform-wide visibility. The dashboard provides a real-time overview of total tenants, users, tickets raised today, and overall SLA compliance across all workspaces.
+The tenant activity table is the heart of the dashboard, listing every workspace sorted by ticket volume along with open and resolved ticket counts, agent and customer totals, and SLA health badges. Compliance above 90% is marked green, 70–89% amber, and below 70% red, allowing struggling tenants to be identified instantly without opening individual workspaces.
+Platform email delivery statistics are also monitored directly from the dashboard, making failed notification spikes immediately visible.
+Recent tenant registrations are displayed with human-friendly timestamps like “Joined 3 days ago” to help track platform growth.
+To keep performance fast, all cross-tenant analytics run in parallel and are cached for five minutes.
+
 
 ---
 
@@ -155,7 +162,7 @@ SupportDeskPro/
 │   │   ├── Auth/                       -- Register, Login, VerifyEmail, Forgot and Change Password
 │   │   ├── Categories/                 -- Create, Get, Update categories
 │   │   ├── Comments/                   -- Create, Get Update and Delete Comment
-│   │   ├── Dashboard/                  -- Admin and Agent stats queries
+│   │   ├── Dashboard/                  -- Admin, Agent and superAdmin stats queries
 │   │   ├── Notifications/              -- GetNotifications, MarkAsRead, MarkAllAsRead
 │   │   ├── SLAPolicies/                -- Full CRUD per priority level
 │   │   ├── Tenants/                    -- Create, Get, Update tenants
