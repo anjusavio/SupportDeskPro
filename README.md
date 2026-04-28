@@ -397,6 +397,8 @@ The bell icon in the navbar polls the unread count every 30 seconds without requ
 ### **Role-Based Dashboards**
 Each role lands on a different dashboard after login, showing only what is relevant to them.
 
+The **SuperAdmin dashboard** provides a platform-wide view across every tenant, including total tenants, users, tickets raised today, overall SLA compliance, tenant activity, email delivery health, and recent tenant registrations. Tenant activity is sorted by ticket volume with SLA health indicators to quickly identify workspaces that may need attention.
+
 The **Admin dashboard** shows tenant-wide ticket volume, agent workload comparison, category breakdown, SLA compliance metrics, and tickets by priority. Every summary card is clickable and navigates to a filtered ticket list.
 
 The **Agent dashboard** shows their personal queue — open tickets, SLA status across their assigned tickets, tickets resolved today, and average resolution time. It is focused entirely on what the agent needs to act on.
