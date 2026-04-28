@@ -433,6 +433,39 @@ accidentally be served to another tenant. In a multi-server production environme
 the natural next step would be replacing IMemoryCache with Redis for distributed 
 caching — the invalidation logic and key structure would stay exactly the same.
 
+### **Rate Limiting and Throttling**
+
+Not every endpoint deserves the same level of protection. A login form sitting open 
+on the internet is a different risk than a dashboard query made by an authenticated 
+agent. The rate limiting strategy reflects that.
+
+Auth endpoints — login, register, forgot password and reset password — are limited to 
+five requests per minute per IP address. The IP is the only identifier available before 
+a user logs in, and five attempts per minute is generous enough for any legitimate user 
+while making automated brute force attacks practically useless.
+
+AI endpoints use a different partition key — the authenticated user ID extracted from 
+JWT claims. Each user gets their own independent quota of ten Claude API calls per 
+minute. This keeps costs predictable and prevents one heavy user from exhausting a 
+shared limit. File upload endpoints follow the same per-user pattern with a limit of 
+twenty uploads per minute. Dashboard and reporting endpoints, which run expensive 
+aggregation queries across the database, are capped at thirty requests per minute 
+per user.
+
+A global limiter sits behind all of this as a baseline safety net — one hundred 
+requests per minute per IP regardless of endpoint. It requires no configuration on 
+individual controllers and catches anything not covered by the specific policies.
+
+When a limit is exceeded the API returns 429 Too Many Requests with a Retry-After 
+header telling the client exactly how many seconds to wait before trying again. The 
+response body matches the same JSON shape used across the rest of the API so the 
+frontend handles it consistently.
+
+Auth and global policies use pure rate limiting — excess requests are rejected 
+immediately. AI and upload policies include a small queue so brief bursts are absorbed 
+before rejection, which is a better experience when a user rapidly submits a few 
+files or triggers the AI suggestion while typing quickly.
+
 ---
 
 ## **Database – Azure SQL Database**
