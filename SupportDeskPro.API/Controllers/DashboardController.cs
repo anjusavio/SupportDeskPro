@@ -14,7 +14,8 @@ using SupportDeskPro.Domain.Entities;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Security.Claims;
-using Microsoft.AspNetCore.RateLimiting; // Heavy DB queries — 30 per minute per user
+using Microsoft.AspNetCore.RateLimiting;
+using SupportDeskPro.Application.Features.Dashboard.GetSuperAdminDashboard; // Heavy DB queries — 30 per minute per user
 
 namespace SupportDeskPro.API.Controllers;
 
@@ -61,5 +62,22 @@ public class DashboardController : ControllerBase
 
         var result = await _mediator.Send(new GetAgentDashboardQuery(agentId));
         return Ok(ApiResponse<AgentDashboardResponse>.Ok(result));
+    }
+
+    /// <summary>
+    /// Returns platform-wide dashboard for SuperAdmin.
+    /// Includes tenant overview, per-tenant activity breakdown,
+    /// SLA compliance rates, and recent tenant registrations.
+    /// No tenant scoping — SuperAdmin sees all data.
+    /// Cached for 5 minutes — expensive cross-tenant aggregation.
+    /// </summary>
+    [HttpGet("superadmin")]
+    [Authorize(Roles = "SuperAdmin")]
+    [EnableRateLimiting("heavy")]
+    public async Task<IActionResult> GetSuperAdminDashboard()
+    {
+
+        var result = await _mediator.Send(new GetSuperAdminDashboardQuery());
+        return Ok(ApiResponse<SuperAdminDashboardResponse>.Ok(result));
     }
 }
