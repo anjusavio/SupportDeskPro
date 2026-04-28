@@ -39,6 +39,7 @@ import ChangePasswordPage from './pages/auth/ChangePasswordPage';
 
 //Superadmin pages
 import TenantsPage from './pages/superadmin/TenantsPage';
+import SuperAdminDashboardPage from './pages/superadmin/SuperAdminDashboardPage';
 
 // Admin pages
 import AdminDashboardPage from './pages/admin/DashboardPage';
@@ -132,6 +133,14 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['SuperAdmin']}>
                   <TenantsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route path="/superadmin/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={['SuperAdmin']}>
+                  <SuperAdminDashboardPage />
                 </ProtectedRoute>
               }
             />

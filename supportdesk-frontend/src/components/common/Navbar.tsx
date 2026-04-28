@@ -131,12 +131,20 @@ const Navbar: React.FC = () => {
 
               {/* SuperAdmin only */}
               {user?.role === 'SuperAdmin' && (
-                <Link to="/superadmin/tenants" className={navLinkClass('/superadmin/tenants')}>
-                  <Building2 size={16} />
-                  Tenants
-                </Link>
-              )
-              }
+                <>
+                  <Link to="/superadmin/dashboard"
+                    className={navLinkClass('/superadmin/dashboard')}>
+                    <LayoutDashboard size={16} />
+                    Dashboard
+                  </Link>
+                  
+                  <Link to="/superadmin/tenants"
+                    className={navLinkClass('/superadmin/tenants')}>
+                    <Building2 size={16} />
+                    Tenants
+                  </Link>
+                </>
+              )}
               
 
               {/* Admin only */}
