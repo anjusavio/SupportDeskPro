@@ -15,7 +15,7 @@ improve response quality.
 ### **The Problem It Solves**
 
 Most support operations start with email. It works until it doesn't — tickets get missed, response times are inconsistent, and there is no visibility into who is handling what. I wanted to build something that solves this properly, the way a real company would.
-The result is a platform that handles the full ticket lifecycle from creation to closure, enforces SLA deadlines automatically, upload/download supporting documents, sends real email notifications, and keeps every company's data completely isolated even though they share the same database. Multiple companies can run on a single deployment. Each one manages their own team, agents, categories, and SLA policies independently.
+The result is a platform that handles the full ticket lifecycle from creation to closure, enforces SLA deadlines automatically, upload/download supporting documents, sends real email notifications, and keeps every company's data completely isolated even though they share the same database. Multiple companies can run on a single deployment. Each one manages their own team, agents, categories, and SLA(Service Level Agreement) policies independently.
 
 Beyond the core platform, the system has a practical AI layer built on top. Agents waste 
 time triaging tickets, writing the same replies repeatedly, and walking into conversations 
@@ -282,7 +282,7 @@ Admins invite agents by email. A temporary password is generated and sent automa
 ### **Categories**
 Ticket categories support a parent-child hierarchy with sort ordering so they appear in a logical sequence in dropdowns. Admins manage all categories including activation and deactivation. Deactivating a category hides it from new ticket creation without affecting existing tickets. The active categories endpoint is available to all authenticated roles and powers the dropdown on the ticket creation form.
 
-### **SLA Policies**
+### **SLA (Service Level Agreement) Policies**
 Admins define one SLA policy per priority level — Critical, High, Medium, and Low. Each policy sets two targets: first response time and resolution time. Resolution time must always exceed first response time, enforced at both the validator and handler level. When a ticket is created, the system looks up the matching active policy, calculates the deadlines, and stores them on the ticket. The ticket detail page shows live countdown timers that tick every second. When a deadline passes, the ticket is flagged as breached and the admin receives an automatic email alert.
 
 ### **Tickets**
